@@ -1,0 +1,13 @@
+[Bits 16]
+[Org 0x0000]
+
+%include "System Calls.txt"
+
+mov si, HelloWorld
+call PrintString
+
+jmp $
+
+HelloWorld: db "Hello World!", 0x00
+
+times 1474560 - ($-$$) db 0
