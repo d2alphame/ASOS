@@ -1,0 +1,241 @@
+; This is ASOS - A Silly Operating System. It is a Virtual Machine Operating
+; System. That boots off of a floppy. It can only run programs on a floppy
+; disk. See Documentation.txt to see how ASOS works
+
+[Bits 16]
+[Org 0x7C00]
+
+jmp 0x00:ASOS							; Jump straight to the start of the main code
+align 8								; Align to 8 bytes boundary
+
+ASOSSignature	db "Silly!!!", 0x00				; ASOS's signature
+
+bootDevice:	resb 1
+
+
+ASOS:
+	cli							; Clear interrupts
+
+	; Set-up a flat memory segment with CS=SS=DS=ES
+
+	xor ax, ax
+	mov ds, ax
+	mov es, ax
+	mov ss, ax
+
+	; The stack just below the boot sector. And also set sp=bp
+
+	mov sp, 0x7C00
+	mov bp, sp
+
+	mov byte [bootDevice], dl				; Don't forget to save the boot device.
+	sti							; Set interrupts
+
+	; Load the remaining sectors of the operating system from the floppy disk
+
+	; First, reset the floppy Drive.
+	; Remember DL still contains the boot device number
+		
+	mov ah, 0x00						; Function to reset a disk drive
+	int 13h							; Low level Disk routines
+
+	; Load the remaining 17 sectors from the first track of the floppy disk.
+
+	mov dh, 0x00						; Head number. Head/Side numbering starts from 0. Load from 1st side
+	mov ax, 0x0211						; AH = Function to read sectors, AL = number of sectors to read
+	mov cx, 0x0002						; CH = Cylinder/track, CL = Sector (Cylinder/Track starts from 0, Sector starts from 1)
+	mov bx, 0x7E00						; Offset into the segment where to place the loaded sectors. Sectors are loaded at es:bx
+
+	int 13h							; Interrupt for low level disk services
+
+	call 0x00:ClearScreen					; Clear the screen
+
+	; Position the cursor on the top left hand corner of the screen
+
+	mov ah, 0x02						; Function to set cursor position
+	xor dx, dx						; Place cursor at 0, 0 (DH = Row, DL = Column)
+	xor bh, bh						; First page
+
+	int 10h							; Move the cursor
+
+	; Display the  introductory messages
+
+	mov si, message1
+	call 0x00:PrintString
+
+	; Wait for the user to press a key.
+
+	.waitForKey:
+
+		mov ax, 0x1000					; Clear AL to zero. AH = 0x10 (Function to get key press)
+		int 16h						; Keyboard interrupt
+
+		cmp al, 0x0D					; Check if the enter key was pressed
+		jne .waitForKey					; If it was not, then go and wait for it
+
+	; Once the enter key has been pressed, then load the sectors from the floppy disk
+
+	call 0x00:ReadFloppy
+
+	; Check the 8-byte value at offset 0x08 into the loaded sectors for the ASOS signature string "Silly!!!"
+
+	mov si, ASOSSignature
+	mov di, 0x08
+	mov cx, 0x08
+	repz cmpsb
+
+	jz .showMessage						; If the signature string is found then we assume the disk has not been changed
+
+	; If the disk has been changed, then execute the progam... but before that...
+
+	call 0x00:ClearScreen					; Clear the screen
+
+	; Move the cursor back to the beginning of the screen
+
+	mov ah, 0x02						; Function to set cursor position
+	xor dx, dx						; Place cursor at 0, 0 (DH = Row, DL = Column)
+	xor bh, bh						; First page
+
+	int 10h							; Move the cursor
+
+	; Set up a flat memory segment at segment 0x1000 where the program is loaded
+
+	mov ax, 0x1000
+	mov ds, ax
+	mov es, ax
+	mov ss, ax
+
+	; Point the stack at the end of the alloted segment
+
+	mov sp, 0xFFFE
+	mov bp, sp
+
+	call 0x1000:0x0000					; Make a far call to the program
+
+	; When the programs return,
+
+	cli
+
+	; Reset the segment registers and the stack back to their previous values...
+
+	mov ax, 0x0000
+	mov ds, ax
+	mov es, ax
+	mov ss, ax
+	mov sp, 0x7C00
+	mov bp, sp
+
+	sti
+
+.showMessage:
+	call 0x00:ClearScreen					; Clear the screen again
+
+	; Again, move the cursor back to the beginning of the screen
+
+	mov ah, 0x02						; Function to set cursor position
+	xor dx, dx						; Place cursor at 0, 0 (DH = Row, DL = Column)
+	xor bh, bh						; First page
+
+	int 10h							; Move the cursor
+
+	mov si, message2
+	call 0x00:PrintString
+
+	jmp .waitForKey						; Go and wait for key press
+
+
+
+
+
+ReadFloppy:
+	; This Function reads all sectors in the first track of the floppy disk. The sectors are loaded at 0x1000:0x0000
+
+	; First, reset the floppy Drive.
+		
+	mov ah, 0x00						; Function to reset a disk drive
+	mov dl, byte [bootDevice]				; Floppy disk is expected to be in this drive
+	int 13h							; Low level Disk routines
+
+	; Load the 18 sectors from the first track of the floppy disk.
+
+	mov si, 0x1000
+	mov es, si						; ES = Segment where sectors will be loaded
+	mov dh, 0x00						; Head number. Head/Side numbering starts from 0. Load from 1st side
+	mov ax, 0x0212						; AH = Function to read sectors, AL = number of sectors to read
+	mov cx, 0x0001						; CH = Cylinder/track, CL = Sector (Cylinder/Track starts from 0, Sector starts from 1)
+	mov bx, 0x0000						; Offset into the segment where to place the loaded sectors. Sectors are loaded at es:bx
+
+	int 13h							; Interrupt for low level disk services
+
+	retf
+
+
+PrintString:
+	; Function for printing null-terminated strings. DS:SI = string to print.
+
+	; Setup for printing
+
+	mov ah, 0x0E						; Print in Teletype mode
+	mov bx, 0x0007						; Print in page 0 (BH), Grey text on black background (BL)
+
+	.fetchBytes:
+		lodsb						; Load a byte from the string
+
+		cmp al, 0x00					; Check if its the terminating byte
+		je .done					; If it is, then we're done printing
+
+		int 10h						; Print the character
+
+		jmp .fetchBytes					; Go fetch the next byte
+
+		.done:
+			retf					; Return once we're done
+
+
+ClearScreen:
+	; Function for clearing the screen.
+
+	xor cx, cx						; Top Left corner of window to clear (CH = row, CL = column)
+	mov dh, 24						; Row of Bottom right hand corner of window to clear
+	mov dl, 79						; Column of Bottom right hand corner of window to clear
+	mov ax, 0x0600						; AH = Function to scroll window up, AL = Number of lines to scroll (0 = clear screen)
+	mov bx, 0x0700						; BH = Attributes to clear with, BL = Page to clear
+
+	int 10h							; Clear the screen
+
+	retf
+
+
+times 510-($-$$) db 0						; Pad up the rest of the boot sector with 0's
+dw 0xAA55							; The boot sector signature
+
+
+; ================================================= E N D  O F  F I R S T  S E C T O R ==========================================================
+
+message1: 	db "WELCOME TO ASOS", 0X0A, 0X0D, 0x0A, 0x0D
+		db "Remove the ASOS floppy disk from its drive and replace it with the", 0x0A, 0x0D
+		db "floppy disk that contains the program you want to execute. Then press the", 0x0A, 0x0D
+		db '"enter" key to continue...', 0x0A, 0x0D, 0x0A, 0x0D
+		db "IMPORTANT: ASOS will only load all the 18 sectors in the first track of the", 0x0A, 0x0D
+		db "floppy and execute. The sectors are loaded at 0x1000:0x0000", 0x0A, 0x0D, 0x00
+
+message2:	db 'Insert the floppy disk that contains the program to execute and press the', 0x0A, 0x0D
+		db '"enter" key to continue...', 0x00
+
+
+times 1024-($-$$) db 0						; This makes 1KiB of code. This places the jump table below at 0x8000
+
+
+; ===================================================== E N D  O F  S E C O N D  S E C T O R ===========================================================
+
+jmp ReadFloppy
+align 16
+
+jmp PrintString
+align 16
+
+jmp ClearScreen
+align 16
+
+
+times 1474560-($-$$) db 0					; Add more padding for 1.44MB floppy
