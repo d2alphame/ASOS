@@ -29,7 +29,9 @@ MAIN:
     int 13h                                         ; Read the sector
 
     ; Read the first sector of the first drive into memory. For this we use the new disk routines
-
+    mov dl, 0x80                                    ; We want to read from the first hard disk
+    mov si, DATA.size_of_packet                     ; Point si at the data packet
+    mov ah, 0x42                                    ; Read function (in extended disk routines)
 
     mov ah, 0x0E                                    ; Print in teletype mode
     mov al, 'A'                                     ; The character to print
@@ -45,8 +47,8 @@ MAIN:
         .size_of_packet:    db 0x10                 ; Size of the packet is 16 bytes
         .unused:            db 0x00                 ; This field is unused
         .sector_count:      dw 0x01                 ; Number of sectors to transfer
-        .segment:           dw 0x00                 ; Segment of memory address for transfer
         .offset:            dw 0x8000               ; Offset of memory address for transfer
+        .segment:           dw 0x00                 ; Segment of memory address for transfer
         .start_lba_lower:   dd 0x01                 ; Lower 32 bits of LBA of sectors to load
         .start_lba_upper:   dd 0x00                 ; Upper 16 bits of LBA of sectors to load
 
