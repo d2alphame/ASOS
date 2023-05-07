@@ -33,6 +33,16 @@ MAIN:
     mov si, DATA.size_of_packet                     ; Point si at the data packet
     mov ah, 0x42                                    ; Read function (in extended disk routines)
 
+    ; Check for a free partition and its size.
+    mov bx, 0x8000                                  ; Where first sector of hard drive was loaded
+    add bx, 446                                     ; Point bp to first partition.
+    mov si, bx
+    add si, 4                                       ; Point si to the partition_type field of the first entry
+    lodsb                                           ; Read the byte at that point into al
+    cmp al, 0                                       ; This means it's a free partition
+
+
+
     mov ah, 0x0E                                    ; Print in teletype mode
     mov al, 'A'                                     ; The character to print
     mov bx, 0x0007                                  ; Print in page 0 (bh), grey text on black background (bl)
