@@ -2,7 +2,7 @@
 [Bits 16]
 [Org 0x7c00]
 
-jmp 0x00:MAIN                                       ; A trick to set cs = 0
+jmp 0x00:MAIN                                       ; A trick to set cs = 0                             
 
 MAIN:
     cli                                             ; Clear interrupts. No interruptions before we're done setting up
@@ -22,13 +22,34 @@ MAIN:
     mov ah, 0x00                                    ; Function to reset disk
     int 13h                                         ; Disk routines
 
+    ; Load in sector number 1 from the boot device into 0x7E00 (that's at the end of this boot sector)
+    mov dl, byte [.installer_boot_device]           ; Reload the boot device number into dl
+    mov ax, 0x0201                                  ; AH = 2, function to read sectors. AL = 1 number of sectors to read
+    mov bx, 0x7E00                                  ; es:bx = where to load the sectors in memory
+    int 13h                                         ; Read the sector
+
+    ; Read the first sector of the first drive into memory. For this we use the new disk routines
+
+
     mov ah, 0x0E                                    ; Print in teletype mode
     mov al, 'A'                                     ; The character to print
     mov bx, 0x0007                                  ; Print in page 0 (bh), grey text on black background (bl)
     int 10h                                         ; Interrupt for printing to screen
     jmp $                                           ; Hang here
 
+    
     .installer_boot_device: db 0                    ; We'll save the boot device here as soon as we find it
+    
+    align 4                                         ; The disk access packet which follows should be aligned on a 4-byte boundary
+    DATA:
+        .size_of_packet:    db 0x10                 ; Size of the packet is 16 bytes
+        .unused:            db 0x00                 ; This field is unused
+        .sector_count:      dw 0x01                 ; Number of sectors to transfer
+        .segment:           dw 0x00                 ; Segment of memory address for transfer
+        .offset:            dw 0x8000               ; Offset of memory address for transfer
+        .start_lba_lower:   dd 0x01                 ; Lower 32 bits of LBA of sectors to load
+        .start_lba_upper:   dd 0x00                 ; Upper 16 bits of LBA of sectors to load
+
 
 times 510 - ($ - $$) db 0                       ; Padd with 0s up to 510 bytes
 dw 0xAA55                                       ; The boot signature
