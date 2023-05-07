@@ -18,6 +18,10 @@ MAIN:
 
     mov byte [.installer_boot_device], dl           ; Save the boot device. This will be handed to us by BIOS
 
+    ; Reset the floppy disk
+    mov ah, 0x00                                    ; Function to reset disk
+    int 13h                                         ; Disk routines
+
     mov ah, 0x0E                                    ; Print in teletype mode
     mov al, 'A'                                     ; The character to print
     mov bx, 0x0007                                  ; Print in page 0 (bh), grey text on black background (bl)
