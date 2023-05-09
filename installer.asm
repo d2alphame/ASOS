@@ -26,6 +26,7 @@ MAIN:
     mov dl, byte [.installer_boot_device]           ; Reload the boot device number into dl
     mov ax, 0x0201                                  ; AH = 2, function to read sectors. AL = 1 number of sectors to read
     mov bx, 0x7E00                                  ; es:bx = where to load the sectors in memory
+    mov cx, 0x0002                                  ; CH = Cylinder/track, CL = Sector number (Sector numbering starts with 1) 
     int 13h                                         ; Read the sector
 
     ; Read the first sector of the first drive into memory. For this we use the new disk routines
