@@ -12,17 +12,17 @@ MAIN:
     mov ds, ax
     mov es, ax
     mov ss, ax
-    mov sp, 0xFFFE                                  ; Point the stack to the top of the segment
+    mov sp, 0x600                                   ; Use 0x500 to 0x600 for the stack giving us 256 bytes of stack space
 
     sti                                             ; We're done setting up. Set interrupts again
 
     mov byte [.installer_boot_device], dl           ; Save the boot device. This will be handed to us by BIOS
 
-    ; Reset the floppy disk
+    ; Reset the floppy disk. Remember the boot device is still in dl
     mov ah, 0x00                                    ; Function to reset disk
     int 13h                                         ; Disk routines
 
-    ; Load in sector number 1 from the boot device into 0x7E00 (that's at the end of this boot sector)
+    ; Load in sector number 1 from the boot device into 0x600 (that's at the end of this boot sector)
     mov dl, byte [.installer_boot_device]           ; Reload the boot device number into dl
     mov ax, 0x0201                                  ; AH = 2, function to read sectors. AL = 1 number of sectors to read
     mov bx, 0x7E00                                  ; es:bx = where to load the sectors in memory
@@ -42,14 +42,26 @@ MAIN:
     lodsb                                           ; Read the byte at that point into al
     cmp al, 0                                       ; This means it's a free partition
 
-
-
     mov ah, 0x0E                                    ; Print in teletype mode
     mov al, 'A'                                     ; The character to print
     mov bx, 0x0007                                  ; Print in page 0 (bh), grey text on black background (bl)
     int 10h                                         ; Interrupt for printing to screen
     jmp $                                           ; Hang here
 
+
+    ; Prints a null-terminated string in teletype mode.
+    ; In
+    ; SI = String to print
+    print_null_terminated_string:
+        mov ah, 0x0E
+        mov bx, 0x0007
+        .loop:
+            lodsb
+            cmp al, 0x00
+            je .done
+            int 10h
+        .done:
+            ret
     
     .installer_boot_device: db 0                    ; We'll save the boot device here as soon as we find it
     
@@ -64,6 +76,9 @@ MAIN:
         .start_lba_upper:   dd 0x00                 ; Upper 16 bits of LBA of sectors to load
 
 
-times 510 - ($ - $$) db 0                       ; Padd with 0s up to 510 bytes
+    BOOT_SUCCESS: db "Boot Successful", 0x0A, 0x0D, 0x00
+    ERROR_READING_INSTALLATION_FLOPPY: db "Error reading installation floppy", 0x0A, 0x0D, 0x00
+
+;times 510 - ($ - $$) db 0                       ; Padd with 0s up to 510 bytes
 dw 0xAA55                                       ; The boot signature
-times 1474560 - ($ - $$) db 0                   ; Pad with more 0s to make up 1.44MB floppy disk
+;times 1474560 - ($ - $$) db 0                   ; Pad with more 0s to make up 1.44MB floppy disk
