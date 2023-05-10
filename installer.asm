@@ -25,13 +25,15 @@ MAIN:
     ; Reset the floppy disk. Remember the boot device is still in dl
     mov ah, 0x00                                    ; Function to reset disk
     int 13h                                         ; Disk routines
+    jc disk_reset_error                             ; Carry would be set if there's an error
 
     ; Load in sector number 1 from the boot device into 0x600 (that's at the end of this boot sector)
     mov dl, byte [INSTALLER_BOOT_DEVICE]            ; Reload the boot device number into dl
     mov ax, 0x0201                                  ; AH = 2, function to read sectors. AL = 1 number of sectors to read
-    mov bx, 0x7E00                                  ; es:bx = where to load the sectors in memory
+    mov bx, 0x600                                   ; es:bx = where to load the sectors in memory
     mov cx, 0x0002                                  ; CH = Cylinder/track, CL = Sector number (Sector numbering starts with 1) 
     int 13h                                         ; Read the sector
+    jc disk_read_error                              ; Carry would be set if there's error
 
     ; Read the first sector of the first drive into memory. For this we use the new disk routines
     mov dl, 0x80                                    ; We want to read from the first hard disk
@@ -68,6 +70,15 @@ MAIN:
         .done:
             ret
     
+    disk_reset_error:
+        mov si, ERROR_RESETTING_BOOT_DEVICE
+        call print_null_terminated_string
+        jmp $
+
+    disk_read_error:
+        mov si, ERROR_READING_INSTALLATION_FLOPPY
+        call print_null_terminated_string
+        jmp $
     
     align 4                                         ; The disk access packet which follows should be aligned on a 4-byte boundary
     DISK_ACCESS_PACKET:
@@ -82,6 +93,7 @@ MAIN:
     INSTALLER_BOOT_DEVICE:  db 0                    ; We'll save the boot device here as soon as we find it
 
     BOOT_SUCCESS: db "Boot Successful", 0x0A, 0x0D, 0x00
+    ERROR_RESETTING_BOOT_DEVICE: db "Could not reset installation floppy drive", 0x0A, 0x0D, 0x00
     ERROR_READING_INSTALLATION_FLOPPY: db "Error reading installation floppy", 0x0A, 0x0D, 0x00
 
 times 510 - ($ - $$) db 0                         ; Padd with 0s up to 510 bytes
