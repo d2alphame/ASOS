@@ -45,8 +45,11 @@ MAIN:
     add bx, 446                                     ; Point bx to first partition.
     mov si, bx
     add si, 4                                       ; Point si to the partition_type field of the first entry
-    lodsb                                           ; Read the byte at that point into al
-    cmp al, 0                                       ; This means it's a free partition
+    mov cl, 1                                       ; Use this to track the partition currently being examined. We're starting with partition 1 here.
+    lodsb                                           ; Read the partition type byte into al
+    cmp al, 0                                       ; 0 means the partition is free
+    ; --- Remember to add a jump here ---
+
 
     mov ah, 0x0E                                    ; Print in teletype mode
     mov al, 'A'                                     ; The character to print
