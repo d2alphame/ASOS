@@ -25,15 +25,15 @@ MAIN:
     ; Reset the floppy disk. Remember the boot device is still in dl
     mov ah, 0x00                                    ; Function to reset disk
     int 13h                                         ; Disk routines
-    jc disk_reset_error                             ; Carry would be set if there's an error
+    jc disk_reset_error                             ; Carry would be set if there was an error
 
-    ; Load in sector number 1 from the boot device into 0x600 (that's at the end of this boot sector)
+    ; Load in sector number 1 from the boot device into 0x600. That's just above the stack we set up
     mov dl, byte [INSTALLER_BOOT_DEVICE]            ; Reload the boot device number into dl
     mov ax, 0x0201                                  ; AH = 2, function to read sectors. AL = 1 number of sectors to read
     mov bx, 0x600                                   ; es:bx = where to load the sectors in memory
     mov cx, 0x0002                                  ; CH = Cylinder/track, CL = Sector number (Sector numbering starts with 1) 
     int 13h                                         ; Read the sector
-    jc disk_read_error                              ; Carry would be set if there's error
+    jc disk_read_error                              ; Carry would be set if there was an error
 
     ; Read the first sector of the first drive into memory. For this we use the new disk routines
     mov dl, 0x80                                    ; We want to read from the first hard disk
@@ -42,7 +42,7 @@ MAIN:
 
     ; Check for a free partition and its size.
     mov bx, 0x8000                                  ; Where first sector of hard drive was loaded
-    add bx, 446                                     ; Point bp to first partition.
+    add bx, 446                                     ; Point bx to first partition.
     mov si, bx
     add si, 4                                       ; Point si to the partition_type field of the first entry
     lodsb                                           ; Read the byte at that point into al
@@ -96,6 +96,6 @@ MAIN:
     ERROR_RESETTING_BOOT_DEVICE: db "Could not reset installation floppy drive", 0x0A, 0x0D, 0x00
     ERROR_READING_INSTALLATION_FLOPPY: db "Error reading installation floppy", 0x0A, 0x0D, 0x00
 
-times 510 - ($ - $$) db 0                         ; Padd with 0s up to 510 bytes
+; times 510 - ($ - $$) db 0                         ; Padd with 0s up to 510 bytes
 dw 0xAA55                                          ; The boot signature
-times 1474560 - ($ - $$) db 0                     ; Pad with more 0s to make up 1.44MB floppy disk
+; times 1474560 - ($ - $$) db 0                     ; Pad with more 0s to make up 1.44MB floppy disk
