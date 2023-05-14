@@ -51,6 +51,10 @@ MAIN:
     ; --- Remember to add a jump here ---
 
 
+    cmp cl, 1                                       ; If on the first partition...
+    jne
+
+
     mov ah, 0x0E                                    ; Print in teletype mode
     mov al, 'A'                                     ; The character to print
     mov bx, 0x0007                                  ; Print in page 0 (bh), grey text on black background (bl)
