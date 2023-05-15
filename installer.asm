@@ -41,7 +41,8 @@ MAIN:
     mov si, DISK_ACCESS_PACKET                      ; Point si at the data packet
     mov ah, 0x42                                    ; Read function (in extended disk routines)
 
-    
+
+
 
     ; Prints a null-terminated string in teletype mode.
     ; In
@@ -67,28 +68,35 @@ MAIN:
         mov si, ERROR_READING_INSTALLATION_FLOPPY
         call print_null_terminated_string
         jmp $
+
+    harddisk_read_error:
+        mov si, ERROR_READING_HARDDISK
+        call print_null_terminated_string
+        jmp $
     
     align 4                                         ; The disk access packet which follows should be aligned on a 4-byte boundary
     DISK_ACCESS_PACKET:
-        .size_of_packet:    db 0x10                 ; Size of the packet is 16 bytes
-        .unused:            db 0x00                 ; This field is unused
-        .sector_count:      dw 0x01                 ; Number of sectors to transfer
-        .offset:            dw 0x8000               ; Offset of memory address for transfer
-        .segment:           dw 0x00                 ; Segment of memory address for transfer
-        .start_lba_lower:   dd 0x01                 ; Lower 32 bits of LBA of sectors to load
-        .start_lba_upper:   dd 0x00                 ; Upper 16 bits of LBA of sectors to load
+        .size_of_packet:    db 0x10                                     ; Size of the packet is 16 bytes
+        .unused:            db 0x00                                     ; This field is unused
+        .sector_count:      dw 0x01                                     ; Number of sectors to transfer
+        .offset:            dw CONST_HARDDISK_FIRST_SECTOR_MEMORY_OFF   ; Offset of memory address for transfer
+        .segment:           dw CONST_HARDDISK_FIRST_SECTOR_MEMORY_SEG   ; Segment of memory address for transfer
+        .start_lba_lower:   dd 0x01                                     ; Lower 32 bits of LBA of sectors to load
+        .start_lba_upper:   dd 0x00                                     ; Upper 16 bits of LBA of sectors to load
 
     INSTALLER_BOOT_DEVICE:  db 0                    ; We'll save the boot device here as soon as we find it
 
     BOOT_SUCCESS: db "Boot Successful", 0x0A, 0x0D, 0x00
     ERROR_RESETTING_BOOT_DEVICE: db "Could not reset installation floppy drive", 0x0A, 0x0D, 0x00
     ERROR_READING_INSTALLATION_FLOPPY: db "Error reading installation floppy", 0x0A, 0x0D, 0x00
+    ERROR_READING_HARDDISK: db "Error reading from the hard disk", 0x0A, 0x0D, 0x00
 
 
-; times 510 - ($ - $$) db 0                         ; Padd with 0s up to 510 bytes
+times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
 dw 0xAA55                                           ; The boot signature
-; times 1474560 - ($ - $$) db 0                     ; Pad with more 0s to make up 1.44MB floppy disk
+times 1474560 - ($ - $$) db 0                       ; Pad with more 0s to make up 1.44MB floppy disk
 
 
 CONST_SECOND_SECTOR_MEMORY_LOCATION equ 0x600       ; Where in memory second sector of the installation floppy will be loaded
-CONST_HARDDISK_FIRST_SECTOR_MEMORY equ 0x800        ; Where in memory first sector of hard disk will be loaded
+CONST_HARDDISK_FIRST_SECTOR_MEMORY_OFF equ 0x800    ; Where in memory first sector of hard disk will be loaded (offset)
+CONST_HARDDISK_FIRST_SECTOR_MEMORY_SEG equ 0x00     ; Where in memory first sector of hard disk will be loaded (segment)
