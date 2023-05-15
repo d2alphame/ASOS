@@ -27,11 +27,11 @@ MAIN:
     int 13h                                         ; Disk routines
     jc disk_reset_error                             ; Carry would be set if there was an error
 
-    ; Load in sector number 1 from the boot device into 0x600. That's just above the stack we set up.
+    ; Load in second sector from the boot device into 0x600. That's just above the stack we set up.
     ; Boot device here being the installation floppy
     mov dl, byte [INSTALLER_BOOT_DEVICE]            ; Reload the boot device number into dl
     mov ax, 0x0201                                  ; AH = 2, function to read sectors. AL = 1 number of sectors to read
-    mov bx, CONST_SECTOR_2_MEMORY_LOCATION          ; es:bx = where to load the sectors in memory
+    mov bx, CONST_SECOND_SECTOR_MEMORY_LOCATION     ; es:bx = where to load the sectors in memory
     mov cx, 0x0002                                  ; CH = Cylinder/track, CL = Sector number (Sector numbering starts with 1) 
     int 13h                                         ; Read the sector
     jc disk_read_error                              ; Carry would be set if there was an error
@@ -90,4 +90,5 @@ dw 0xAA55                                           ; The boot signature
 ; times 1474560 - ($ - $$) db 0                     ; Pad with more 0s to make up 1.44MB floppy disk
 
 
-CONST_SECTOR_2_MEMORY_LOCATION equ 0x600            ; Where in memory sector 2 of the installation floppy will be loaded
+CONST_SECOND_SECTOR_MEMORY_LOCATION equ 0x600       ; Where in memory second sector of the installation floppy will be loaded
+CONST_HARDDISK_FIRST_SECTOR_MEMORY equ 0x800        ; Where in memory first sector of hard disk will be loaded
