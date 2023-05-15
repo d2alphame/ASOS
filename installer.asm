@@ -40,6 +40,18 @@ MAIN:
     mov dl, 0x80                                    ; We want to read from the first hard disk
     mov si, DISK_ACCESS_PACKET                      ; Point si at the data packet
     mov ah, 0x42                                    ; Read function (in extended disk routines)
+    jc harddisk_read_error                          ; 
+
+    ; Check for a protected MBR. The presence of a protected MBR implies the disk is gpt-formatted and
+    ; ASOS is not ready for GPT
+    mov bx, CONST_HARDDISK_FIRST_SECTOR_MEMORY_OFF  ; Memory where hard disk's first sector was loaded
+    add bx, CONST_PARTITION_TABLE_OFFSET            ; bx now points to the partition table
+    mov si, bx
+    add si, 4                                       ; Now si points to the partition_type field of the first partition entry
+    lodsb
+    cmp al, 0xEE                                    ; Partition type for a protective mbr
+    jmp protective_mbr_detected
+
 
 
 
@@ -73,6 +85,11 @@ MAIN:
         mov si, ERROR_READING_HARDDISK
         call print_null_terminated_string
         jmp $
+
+    protective_mbr_detected:
+        mov si, PROTECTIVE_MBR_DETECTED
+        call print_null_terminated_string
+        jmp $
     
     align 4                                         ; The disk access packet which follows should be aligned on a 4-byte boundary
     DISK_ACCESS_PACKET:
@@ -90,13 +107,16 @@ MAIN:
     ERROR_RESETTING_BOOT_DEVICE: db "Could not reset installation floppy drive", 0x0A, 0x0D, 0x00
     ERROR_READING_INSTALLATION_FLOPPY: db "Error reading installation floppy", 0x0A, 0x0D, 0x00
     ERROR_READING_HARDDISK: db "Error reading from the hard disk", 0x0A, 0x0D, 0x00
+    PROTECTIVE_MBR_DETECTED:    db "Protective MBR detected on the hard disk", 0x0A, 0x0D
+                                db  "Aborting installation", 0x0A, 0x0D, 0x00
 
 
-times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
+;times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
 dw 0xAA55                                           ; The boot signature
-times 1474560 - ($ - $$) db 0                       ; Pad with more 0s to make up 1.44MB floppy disk
+;times 1474560 - ($ - $$) db 0                       ; Pad with more 0s to make up 1.44MB floppy disk
 
 
 CONST_SECOND_SECTOR_MEMORY_LOCATION equ 0x600       ; Where in memory second sector of the installation floppy will be loaded
 CONST_HARDDISK_FIRST_SECTOR_MEMORY_OFF equ 0x800    ; Where in memory first sector of hard disk will be loaded (offset)
 CONST_HARDDISK_FIRST_SECTOR_MEMORY_SEG equ 0x00     ; Where in memory first sector of hard disk will be loaded (segment)
+CONST_PARTITION_TABLE_OFFSET equ 446                ; Offset of partition table in an MBR
