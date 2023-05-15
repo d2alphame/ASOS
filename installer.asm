@@ -27,10 +27,11 @@ MAIN:
     int 13h                                         ; Disk routines
     jc disk_reset_error                             ; Carry would be set if there was an error
 
-    ; Load in sector number 1 from the boot device into 0x600. That's just above the stack we set up
+    ; Load in sector number 1 from the boot device into 0x600. That's just above the stack we set up.
+    ; Boot device here being the installation floppy
     mov dl, byte [INSTALLER_BOOT_DEVICE]            ; Reload the boot device number into dl
     mov ax, 0x0201                                  ; AH = 2, function to read sectors. AL = 1 number of sectors to read
-    mov bx, 0x600                                   ; es:bx = where to load the sectors in memory
+    mov bx, CONST_SECTOR_2_MEMORY_LOCATION          ; es:bx = where to load the sectors in memory
     mov cx, 0x0002                                  ; CH = Cylinder/track, CL = Sector number (Sector numbering starts with 1) 
     int 13h                                         ; Read the sector
     jc disk_read_error                              ; Carry would be set if there was an error
@@ -40,27 +41,7 @@ MAIN:
     mov si, DISK_ACCESS_PACKET                      ; Point si at the data packet
     mov ah, 0x42                                    ; Read function (in extended disk routines)
 
-    ; Check for a free partition and its size.
-    mov bx, 0x8000                                  ; Where first sector of hard drive was loaded
-    add bx, 446                                     ; Point bx to first partition.
-    mov si, bx
-    add si, 4                                       ; Point si to the partition_type field of the first entry
-    mov cl, 1                                       ; Use this to track the partition currently being examined. We're starting with partition 1 here.
-    lodsb                                           ; Read the partition type byte into al
-    cmp al, 0                                       ; 0 means the partition is free
-    ; --- Remember to add a jump here ---
-
-
-    cmp cl, 1                                       ; If on the first partition...
-    jne
-
-
-    mov ah, 0x0E                                    ; Print in teletype mode
-    mov al, 'A'                                     ; The character to print
-    mov bx, 0x0007                                  ; Print in page 0 (bh), grey text on black background (bl)
-    int 10h                                         ; Interrupt for printing to screen
-    jmp $                                           ; Hang here
-
+    
 
     ; Prints a null-terminated string in teletype mode.
     ; In
@@ -103,6 +84,10 @@ MAIN:
     ERROR_RESETTING_BOOT_DEVICE: db "Could not reset installation floppy drive", 0x0A, 0x0D, 0x00
     ERROR_READING_INSTALLATION_FLOPPY: db "Error reading installation floppy", 0x0A, 0x0D, 0x00
 
+
 ; times 510 - ($ - $$) db 0                         ; Padd with 0s up to 510 bytes
-dw 0xAA55                                          ; The boot signature
+dw 0xAA55                                           ; The boot signature
 ; times 1474560 - ($ - $$) db 0                     ; Pad with more 0s to make up 1.44MB floppy disk
+
+
+CONST_SECTOR_2_MEMORY_LOCATION equ 0x600            ; Where in memory sector 2 of the installation floppy will be loaded
