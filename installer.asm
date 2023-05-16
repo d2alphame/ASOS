@@ -88,6 +88,6 @@ MAIN:
     INSTALLATION_SUCCESS:   db "The OS has been successfully installed.", 0x0A, 0x0D
                             db "Remove the installation floppy and restart the system", 0x0A, 0x0D, 0x00
 
-;times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
-dw 0xAA55                                           ; The boot signature
-;times 1474560 - ($ - $$) db 0                       ; Pad with more 0s to make up 1.44MB floppy disk
+times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
+dw 0xAA55                                            ; The boot signature
+times 1474560 - ($ - $$) db 0                       ; Pad with more 0s to make up 1.44MB floppy disk
