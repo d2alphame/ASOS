@@ -35,6 +35,12 @@ MAIN:
     mov ah, 0x43                                    ; Write sectors to hard drive (new extension function)
     mov dl, 0x80                                    ; Write to the first hard disk
     int 13h                                         ; Do the copy
+    jc disk_write_error                             ; Display error if an error occured
+
+    ; If there was no error, display the installation success message and loop
+    mov si, INSTALLATION_SUCCESS
+    call print_null_terminated_string
+    jmp $
 
 
     ; Prints a null-terminated string in teletype mode.
@@ -57,8 +63,8 @@ MAIN:
         call print_null_terminated_string
         jmp $
 
-    harddisk_read_error:
-        mov si, ERROR_READING_HARDDISK
+    disk_write_error:
+        mov si, ERROR_WRITING_HARDDISK
         call print_null_terminated_string
         jmp $
     
@@ -77,9 +83,10 @@ MAIN:
     INSTALLER_BOOT_DEVICE:  db 0                    ; We'll save the boot device here as soon as we find it
 
     BOOT_SUCCESS: db "Boot Successful", 0x0A, 0x0D, 0x00
-    ERROR_RESETTING_BOOT_DEVICE: db "Could not reset installation floppy drive", 0x0A, 0x0D, 0x00
     ERROR_READING_INSTALLATION_FLOPPY: db "Error reading installation floppy", 0x0A, 0x0D, 0x00
-    ERROR_READING_HARDDISK: db "Error reading from the hard disk", 0x0A, 0x0D, 0x00
+    ERROR_WRITING_HARDDISK: db "Error writing data to the hard disk", 0x0A, 0x0D, 0x00
+    INSTALLATION_SUCCESS:   db "The OS has been successfully installed.", 0x0A, 0x0D
+                            db "Remove the installation floppy and restart the system", 0x0A, 0x0D, 0x00
 
 ;times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
 dw 0xAA55                                           ; The boot signature
