@@ -30,6 +30,13 @@ MAIN:
     int 13h                                         ; Read the sectors
     jc floppy_read_error                            ; Carry would be set if there was an error
 
+    ; Copy the os' sectors from memory onto the hard disk
+    mov si, DISK_ACCESS_PACKET                      ; Point si to the disk access packet for the copy
+    mov ah, 0x43                                    ; Write sectors to hard drive (new extension function)
+    mov dl, 0x80                                    ; Write to the first hard disk
+    int 13h                                         ; Do the copy
+
+
     ; Prints a null-terminated string in teletype mode.
     ; In
     ; SI = String to print
@@ -54,21 +61,18 @@ MAIN:
         mov si, ERROR_READING_HARDDISK
         call print_null_terminated_string
         jmp $
-
-    protective_mbr_detected:
-        mov si, PROTECTIVE_MBR_DETECTED
-        call print_null_terminated_string
-        jmp $
+    
     
     align 4                                         ; The disk access packet which follows should be aligned on a 4-byte boundary
+    
+    ; Disk access packet. This one will be used for copying the loaded sectors from memory to harddisk
     DISK_ACCESS_PACKET:
-        .size_of_packet:    db 0x10                                     ; Size of the packet is 16 bytes
-        .unused:            db 0x00                                     ; This field is unused
-        .sector_count:      dw 0x01                                     ; Number of sectors to transfer
-        .offset:            dw CONST_HARDDISK_FIRST_SECTOR_MEMORY_OFF   ; Offset of memory address for transfer
-        .segment:           dw CONST_HARDDISK_FIRST_SECTOR_MEMORY_SEG   ; Segment of memory address for transfer
-        .start_lba_lower:   dd 0x01                                     ; Lower 32 bits of LBA of sectors to load
-        .start_lba_upper:   dd 0x00                                     ; Upper 16 bits of LBA of sectors to load
+        .size_of_packet:    db 0x10                 ; Size of the packet is 16 bytes
+        .unused:            db 0x00                 ; This field is unused
+        .sector_count:      dw 0x08                 ; Number of sectors to transfer
+        .offset:            dw 0x600                ; Offset of memory address for transfer
+        .segment:           dw 0x00                 ; Segment of memory address for transfer
+        .lba                dq 0x00                 ; LBA of sectors to copy to
 
     INSTALLER_BOOT_DEVICE:  db 0                    ; We'll save the boot device here as soon as we find it
 
@@ -76,16 +80,7 @@ MAIN:
     ERROR_RESETTING_BOOT_DEVICE: db "Could not reset installation floppy drive", 0x0A, 0x0D, 0x00
     ERROR_READING_INSTALLATION_FLOPPY: db "Error reading installation floppy", 0x0A, 0x0D, 0x00
     ERROR_READING_HARDDISK: db "Error reading from the hard disk", 0x0A, 0x0D, 0x00
-    PROTECTIVE_MBR_DETECTED:    db "Protective MBR detected on the hard disk", 0x0A, 0x0D
-                                db  "Aborting installation", 0x0A, 0x0D, 0x00
-
 
 ;times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
 dw 0xAA55                                           ; The boot signature
 ;times 1474560 - ($ - $$) db 0                       ; Pad with more 0s to make up 1.44MB floppy disk
-
-
-CONST_SECOND_SECTOR_MEMORY_LOCATION equ 0x600       ; Where in memory second sector of the installation floppy will be loaded
-CONST_HARDDISK_FIRST_SECTOR_MEMORY_OFF equ 0x800    ; Where in memory first sector of hard disk will be loaded (offset)
-CONST_HARDDISK_FIRST_SECTOR_MEMORY_SEG equ 0x00     ; Where in memory first sector of hard disk will be loaded (segment)
-CONST_PARTITION_TABLE_OFFSET equ 446                ; Offset of partition table in an MBR
