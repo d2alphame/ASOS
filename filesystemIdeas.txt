@@ -41,3 +41,22 @@ This is the number of clusters that should be reserved for the entries. This ass
 Number of bytes for miscellaneous use: 512 * 32 = 65536
 This is the total number of bytes available for miscellaneous use. It is actually the file entries that would have
 been used for the reserved clusters. In our case we use these for bootstrap code and other things.
+
+This means the first file entry will be located in sector 128 (65536 / 512), and the file itself will be located in
+cluster number 512 (cluster numbering starts from 0) or 2097152 bytes in.
+
+It also means when searching for a file entry, start searching at 16. (65536/4096 where 4096 is the number of bytes
+per cluster) E.g.
+
+.loop:
+    mov cx, 16
+    #(scan filename)
+    #(if file found jmp to load_file)
+    #(else if cx = 0xFFFF then scan is done)
+    inc cx
+    jmp .loop
+
+load_file:
+    shl cx, 3               ; multipy by 8 (number of sectors per cluster) to get lba offset.
+    add cx, lba_start       ; lba_start is the lba of first sector of partition or filesystem
+    #(load 8 sectors)
