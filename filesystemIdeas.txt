@@ -1,5 +1,3 @@
-First Cluster
-=============
 offset              size                description
 0                   8                   jmp instruction should be padded with nulls or nops up to 8 bytes
 8                   8                   Total number of sectors on the drive
