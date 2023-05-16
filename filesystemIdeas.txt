@@ -15,11 +15,6 @@ offset              size                description
 *** For example if sectors per cluster = 3, then number of sectors per cluster = 2 ^ 3 = 8
 **** This is calculated as total number of clusters in the partition - 1
 
-offset 32 - 445 Contains the bootstrap code, if any.
-446 - 509       Space for MBR style partition tables if any
-510 - 511       Boot signature given by the word value 0xAA55
-
-
 Total number of possible entries		= 65536
 Bytes per entry					        = 32
 Total number of bytes for all entries	= 32 * 65536	= 2097152
@@ -71,3 +66,17 @@ load_file:
 
 Number of file entries a cluster can hold = 4096 / 32 = 128. This means next cluster of file entries
 should be loaded after every 128 scans
+
+File Entries
+============
+Each file entry is 32 bytes long. And are as follows
+
+field               size                            description
+Filename            28                              Filenames should be padded with spaces up to 30 bytes
+File size           2                               This is the actual number of bytes in the file
+Reserved            2                               Reserved*
+
+* This field is actually used by the filesystem's caching mechanism
+
+When the first byte in the filename is null or 0x00, it means that file has been deleted and the cluster
+it occupied is available for reallocation.
