@@ -22,61 +22,30 @@ MAIN:
 
     mov byte [INSTALLER_BOOT_DEVICE], dl            ; Save the boot device. This will be handed to us by BIOS
 
-    ; Reset the floppy disk. Remember the boot device is still in dl
-    mov ah, 0x00                                    ; Function to reset disk
-    int 13h                                         ; Disk routines
-    jc disk_reset_error                             ; Carry would be set if there was an error
-
-    ; Load in second sector from the boot device into 0x600. That's just above the stack we set up.
-    ; Boot device here being the installation floppy
-    mov dl, byte [INSTALLER_BOOT_DEVICE]            ; Reload the boot device number into dl
-    mov ax, 0x0201                                  ; AH = 2, function to read sectors. AL = 1 number of sectors to read
-    mov bx, CONST_SECOND_SECTOR_MEMORY_LOCATION     ; es:bx = where to load the sectors in memory
+    ; From the installation floppy, read in the sectors of the os to be installed on the hard disk. Note that DL still
+    ; contains the drive number of the device that was booted from
+    mov ax, 0x0208                                  ; AH = 2, function to read sectors. AL = 8 number of sectors to read
+    mov bx, 0x600                                   ; es:bx = where to load the sectors in memory. We've already set es to 0
     mov cx, 0x0002                                  ; CH = Cylinder/track, CL = Sector number (Sector numbering starts with 1) 
-    int 13h                                         ; Read the sector
-    jc disk_read_error                              ; Carry would be set if there was an error
-
-    ; Read the first sector of the first drive into memory. For this we use the new disk routines
-    mov dl, 0x80                                    ; We want to read from the first hard disk
-    mov si, DISK_ACCESS_PACKET                      ; Point si at the data packet
-    mov ah, 0x42                                    ; Read function (in extended disk routines)
-    jc harddisk_read_error                          ; 
-
-    ; Check for a protected MBR. The presence of a protected MBR implies the disk is gpt-formatted and
-    ; ASOS is not ready for GPT
-    mov bx, CONST_HARDDISK_FIRST_SECTOR_MEMORY_OFF  ; Memory where hard disk's first sector was loaded
-    add bx, CONST_PARTITION_TABLE_OFFSET            ; bx now points to the partition table
-    mov si, bx
-    add si, 4                                       ; Now si points to the partition_type field of the first partition entry
-    lodsb
-    cmp al, 0xEE                                    ; Partition type for a protective mbr
-    jmp protective_mbr_detected
-
-
-
-
+    int 13h                                         ; Read the sectors
+    jc floppy_read_error                            ; Carry would be set if there was an error
 
     ; Prints a null-terminated string in teletype mode.
     ; In
     ; SI = String to print
     print_null_terminated_string:
-        mov ah, 0x0E
-        mov bx, 0x0007
+        mov ah, 0x0E                                ; Function to print in teletype mode
+        mov bx, 0x0007                              ; BH = background color (0x00 is black) BL = foreground color (0x07 is grey)
         .loop:
-            lodsb
-            cmp al, 0x00
+            lodsb                                   ; Read the character to print into AL
+            cmp al, 0x00                            ; If it's the null byte, then we're at the end of the string
             je .done
-            int 10h
-            jmp .loop
+            int 10h                                 ; Print it!
+            jmp .loop                               ; Read next character
         .done:
             ret
-    
-    disk_reset_error:
-        mov si, ERROR_RESETTING_BOOT_DEVICE
-        call print_null_terminated_string
-        jmp $
 
-    disk_read_error:
+    floppy_read_error:
         mov si, ERROR_READING_INSTALLATION_FLOPPY
         call print_null_terminated_string
         jmp $
