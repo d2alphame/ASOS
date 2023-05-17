@@ -5,5 +5,6 @@
 jmp 0x00:MAIN                   ; Jump over asos filesystem data below and also set cs = 0
 align 8                         ; ASOS filesystem requires this
 
-TOTAL_SECTORS:  dq 0x400000     ; Total number of sectors on the disk
+TOTAL_SECTORS:  dq 0x08         ; Total number of sectors on the disk
+
         

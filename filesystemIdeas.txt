@@ -1,14 +1,14 @@
 offset              size                description
 0                   8                   jmp instruction should be padded with nulls or nops up to 8 bytes
-8                   4                   Total number of sectors on the drive. (2 to the power of (this number + 16) total number of sectors on disk)*
-16                  1                   Bytes per sector (2 to the power of (this number + 8) gives bytes per sector)**
-17                  1                   Sectors per cluster (2 to the power of this number gives number of sectors per cluster)***
-18                  2                   Cluster offset of last cluster relative to the start of the filesytem ****
-20                  4                   Reserved for future use
-24                  4                   Low 32 bits of LBA of first sector of this partition / filesystem
-28                  4                   High 32 bits of LBA of first sector of this partition / filesystem
-32                  4                   Low 32 bits of LBA of last sector of this partition / filesystem
-36                  4                   High 32 bits of LBA of last sector of this partition / filesystem
+8                   1                   Total number of sectors on the drive. (2 to the power of (this number + 16) total number of sectors on disk)*
+9                   1                   Bytes per sector (2 to the power of (this number + 8) gives bytes per sector)**
+10                  1                   Sectors per cluster (2 to the power of this number gives number of sectors per cluster)***
+11                  2                   Cluster offset of last cluster relative to the start of the filesytem ****
+13                  4                   Reserved for future use
+17                  4                   Low 32 bits of LBA of first sector of this partition / filesystem
+21                  4                   High 32 bits of LBA of first sector of this partition / filesystem
+25                  4                   Low 32 bits of LBA of last sector of this partition / filesystem
+29                  4                   High 32 bits of LBA of last sector of this partition / filesystem
 
 * For example if total sectors = 4, then actual number of sectors on the disk is 2 ^ (4 + 16) = 2 ^ 20 = 2097152
 ** For example if bytes per sector = 1, then the actual bytes by sector is 2 ^ (1 + 8) = 2 ^ 9 = 512
