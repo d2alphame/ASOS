@@ -61,23 +61,29 @@ RELOCATED:
     int 13h
     jc error_reading_rest_of_boot_image
 
+    mov si, SUCCESSFUL_BOOT                         ; Success reading the rest of the cluster. Print the success message
+    call print_null_terminated_string
+
 
 error_reading_rest_of_boot_image:
-    
+    mov si, ERROR_READING_REST_OF_BOOT_IMAGE
+    call print_null_terminated_string
+    jmp $
+
 ; Prints a null terminated string. 
 ; In:
-:   SI - pointer to string to print 
+;   SI - pointer to string to print 
 print_null_terminated_string:
-        mov ah, 0x0E                                ; Function to print in teletype mode
-        mov bx, 0x0007                              ; BH = background color (0x00 is black) BL = foreground color (0x07 is grey)
-        .loop:
-            lodsb                                   ; Read the character to print into AL
-            cmp al, 0x00                            ; If it's the null byte, then we're at the end of the string
-            je .done
-            int 10h                                 ; Print it!
-            jmp .loop                               ; Read next character
-        .done:
-            ret
+    mov ah, 0x0E                                ; Function to print in teletype mode
+    mov bx, 0x0007                              ; BH = background color (0x00 is black) BL = foreground color (0x07 is grey)
+    .loop:
+        lodsb                                   ; Read the character to print into AL
+        cmp al, 0x00                            ; If it's the null byte, then we're at the end of the string
+        je .done
+        int 10h                                 ; Print it!
+        jmp .loop                               ; Read next character
+    .done:
+        ret
 
 
 ; Will be used to read in sectors from the disk. Has to be aligned on a 4 byte boundary
@@ -90,3 +96,5 @@ DATA_ACCESS_PACKET:
     .segment            dw 0x00                     ; Segment part of memory location for transfer
     .lba                dq 0x00                     ; LBA of starting sector for transfer. Will be calculated
 
+SUCCESSFUL_BOOT: db "Successful boot", 0x0A, 0x0D, 0x00
+ERROR_READING_REST_OF_BOOT_IMAGE: db "There was an error reading the rest of the boot image", 0x0A, 0x0D, 0x00
