@@ -1,8 +1,11 @@
 ; The boot sector of ASOS
 [Bits 16]
-[Org 0x7C00]
 
-jmp 0x00:MAIN                                       ; Jump over asos filesystem data below and also set cs = 0
+; I know the boot sector will be loaded at 0x7C00, however, it will relocate itself to 0x600 and will spend
+; most of its lifetime there. So it makes more sense to have Org 0x600 instead of 0x7C00
+[Org 0x600]        
+
+jmp MAIN                                            ; Jump over asos filesystem data below
         align 8                                     ; ASOS filesystem requires this
 LABEL:                  db "ASOS            "       ; Label. 16 Filename characters padded with spaces
 SECTOR_COUNT:           dq 0x400000                 ; Number of sectors on the disk
@@ -26,5 +29,15 @@ MAIN:
     mov ds, ax
     mov es, ax
     mov ss, ax
-    mov sp, 0x600                                   ; Use 0x500 to 0x600 for the stack giving us 256 bytes of stack space
+    mov sp, 0x600                                   ; Use 0x500 to 0x600 for the stack giving us only 256 bytes of stack space
     sti                                             ; We're done setting up. Set interrupts again
+
+    ; Relocate this boot sector to 0x600. That means the boot sector would now occupy 0x600 to 0x7FF
+    mov si, 0x7C00                                  ; Source of bytes to copy i.e, this boot sector
+    mov di, 0x600                                   ; Destination of bytes to copy
+    mov cx, 0x200                                   ; Number of bytes to copy, here 512
+    rep movsb                                       ; Copy
+    jmp 0x00:RELOCATED
+
+RELOCATED:
+    ; Now we've successfully made the jump to the new location in memory. Now we may happily continue
