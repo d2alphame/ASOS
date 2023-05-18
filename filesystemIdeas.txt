@@ -5,21 +5,20 @@ offset              size                description
 26                  2                   Signature. This is a signature for the tool or program that created this filesystem. For ASOS installer, this is 0xA51
 28                  8                   Free for use. Tools, OS, and other programs can use this value as they see fit
 36                  8                   Reserved for future use
-44                   1                   Total number of sectors on the drive. (2 to the power of (this number + 16) total number of sectors on disk)*
-45                   1                   Bytes per sector (2 to the power of (this number + 8) gives bytes per sector)**
-46                  1                   Sectors per cluster (2 to the power of this number gives number of sectors per cluster)***
-48                  2                   Cluster offset of last cluster relative to the start of the filesytem ****
-52                  4                   Reserved for future use
-56                  4                   Low 32 bits of LBA of first sector of this partition / filesystem
-60                  4                   High 32 bits of LBA of first sector of this partition / filesystem
-64                  4                   Low 32 bits of LBA of last sector of this partition / filesystem
-68                  4                   High 32 bits of LBA of last sector of this partition / filesystem
+44                  8                   Number of sectors on the disk.
+45                  1                   Bytes per sector (2 to the power of (this number + 8) gives bytes per sector)*
+46                  1                   Sectors per cluster (2 to the power of this number gives number of sectors per cluster)**
+48                  2                   Cluster offset of last cluster relative to the start of the filesytem ***
+50                  4                   Low 32 bits of LBA of first sector of this partition / filesystem
+54                  4                   High 32 bits of LBA of first sector of this partition / filesystem
+58                  4                   Low 32 bits of LBA of last sector of this partition / filesystem
+62                  4                   High 32 bits of LBA of last sector of this partition / filesystem
+66                  4                   XOR checksum
 
 
-* For example if total sectors = 4, then actual number of sectors on the disk is 2 ^ (4 + 16) = 2 ^ 20 = 2097152
-** For example if bytes per sector = 1, then the actual bytes by sector is 2 ^ (1 + 8) = 2 ^ 9 = 512
-*** For example if sectors per cluster = 3, then number of sectors per cluster = 2 ^ 3 = 8
-**** This is calculated as total number of clusters in the partition - 1
+* For example if bytes per sector = 1, then the actual bytes by sector is 2 ^ (1 + 8) = 2 ^ 9 = 512
+** For example if sectors per cluster = 3, then number of sectors per cluster = 2 ^ 3 = 8
+*** This is calculated as total number of clusters in the partition - 1
 
 Total number of possible entries		= 65536
 Bytes per entry					        = 32
