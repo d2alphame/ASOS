@@ -12,14 +12,18 @@ offset              size                description
 48                  4                   Low 32 bits of LBA of last sector of this partition / filesystem
 52                  4                   High 32 bits of LBA of last sector of this partition / filesystem
 56                  8                   Free for use. Tools, OS, and other programs can use this value as they see fit
-64                  8                   Reserved for future use
-68                  4                   XOR checksum
+64                  8                   Reserved for future use.
+72                  4                   Flags. Can be set to 0 for this version (1.0) of the filesystem
+76                  4                   XOR checksum
 
-Total is 72 bytes
+Total is 80 bytes
 
 * For example if bytes per sector = 1, then the actual bytes by sector is 2 ^ (1 + 8) = 2 ^ 9 = 512
 ** For example if sectors per cluster = 3, then number of sectors per cluster = 2 ^ 3 = 8
 *** This is calculated as total number of clusters in the partition - 1
+
+The filename characters are A-Z a-z 0-9 . -
+The space character is used for padding.
 
 Total number of possible entries		= 65536
 Bytes per entry					        = 32
