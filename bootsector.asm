@@ -41,6 +41,43 @@ MAIN:
 
 RELOCATED:
     ; Now we've successfully made the jump to the new location in memory. We may happily continue
+    ; We want to load the remaining sectors in the cluster to which the boot sector belongs.
+
+    ; Figure out where the remaining sectors for the first cluster are
+    xor eax, eax
+    mov eax, dword [LBA_FIRST]                      ; Get first lba of the filesystem partition
+    inc eax                                         ; The sector after that contains the rest of the boot sector's clusters
+    mov [DATA_ACCESS_PACKET.lba], eax               ; Figured out.
+    mov cl, byte [SECTORS_PER_CLUSTER]              ; Number of sectors to load will be number of sectors in a cluster less 1. Remember boot sector has alredy been loaded
+    mov ax, 0x01
+    shl ax, cl                                      ; 2 ^ SECTORS_PER_CLUSTER = Number of sectors per cluster
+    dec ax                                          ; Because the boot sector has already been loaded
+    mov word [DATA_ACCESS_PACKET.sector_count], ax
+    
+    ; Read in the sectors using 13h Extended routines. Note that dl still contains the boot device
+    ; since it has not been touched
+    mov ah, 0x43                                    ; Function to read sectors from the disk
+    mov si, DATA_ACCESS_PACKET                      ; Point to the data access packet
+    int 13h
+    jc error_reading_rest_of_boot_image
+
+
+error_reading_rest_of_boot_image:
+    
+; Prints a null terminated string. 
+; In:
+:   SI - pointer to string to print 
+print_null_terminated_string:
+        mov ah, 0x0E                                ; Function to print in teletype mode
+        mov bx, 0x0007                              ; BH = background color (0x00 is black) BL = foreground color (0x07 is grey)
+        .loop:
+            lodsb                                   ; Read the character to print into AL
+            cmp al, 0x00                            ; If it's the null byte, then we're at the end of the string
+            je .done
+            int 10h                                 ; Print it!
+            jmp .loop                               ; Read next character
+        .done:
+            ret
 
 
 ; Will be used to read in sectors from the disk. Has to be aligned on a 4 byte boundary
@@ -52,3 +89,4 @@ DATA_ACCESS_PACKET:
     .offset             dw 0x800                    ; Offset part of memory location for transfer
     .segment            dw 0x00                     ; Segment part of memory location for transfer
     .lba                dq 0x00                     ; LBA of starting sector for transfer. Will be calculated
+
