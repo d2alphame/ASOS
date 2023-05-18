@@ -40,4 +40,15 @@ MAIN:
     jmp 0x00:RELOCATED
 
 RELOCATED:
-    ; Now we've successfully made the jump to the new location in memory. Now we may happily continue
+    ; Now we've successfully made the jump to the new location in memory. We may happily continue
+
+
+; Will be used to read in sectors from the disk. Has to be aligned on a 4 byte boundary
+align 4
+DATA_ACCESS_PACKET:
+    .packet_size:       db 0x10                     ; Size of this packet in bytes. This is 16 bytes
+    .unused:            db 0x00                     ; Field unused
+    .sector_count       dw 0x00                     ; Number of sectors to transfer. This will be calculated
+    .offset             dw 0x800                    ; Offset part of memory location for transfer
+    .segment            dw 0x00                     ; Segment part of memory location for transfer
+    .lba                dq 0x00                     ; LBA of starting sector for transfer. Will be calculated
