@@ -1,14 +1,20 @@
 offset              size                description
 0                   8                   jmp instruction should be padded with nulls or nops up to 8 bytes
-8                   1                   Total number of sectors on the drive. (2 to the power of (this number + 16) total number of sectors on disk)*
-9                   1                   Bytes per sector (2 to the power of (this number + 8) gives bytes per sector)**
-10                  1                   Sectors per cluster (2 to the power of this number gives number of sectors per cluster)***
-11                  2                   Cluster offset of last cluster relative to the start of the filesytem ****
-13                  4                   Reserved for future use
-17                  4                   Low 32 bits of LBA of first sector of this partition / filesystem
-21                  4                   High 32 bits of LBA of first sector of this partition / filesystem
-25                  4                   Low 32 bits of LBA of last sector of this partition / filesystem
-29                  4                   High 32 bits of LBA of last sector of this partition / filesystem
+8                   16                  Label. For display purposes only. Only filename characters are allowed
+24                  2                   Version of this file system. Major version in upper byte and minor version in lower byte. For this specification it's 0x0100 i.e. version 1.0
+26                  2                   Signature. This is a signature for the tool or program that created this filesystem. For ASOS installer, this is 0xA51
+28                  8                   Free for use. Tools, OS, and other programs can use this value as they see fit
+36                  8                   Reserved for future use
+44                   1                   Total number of sectors on the drive. (2 to the power of (this number + 16) total number of sectors on disk)*
+45                   1                   Bytes per sector (2 to the power of (this number + 8) gives bytes per sector)**
+46                  1                   Sectors per cluster (2 to the power of this number gives number of sectors per cluster)***
+48                  2                   Cluster offset of last cluster relative to the start of the filesytem ****
+52                  4                   Reserved for future use
+56                  4                   Low 32 bits of LBA of first sector of this partition / filesystem
+60                  4                   High 32 bits of LBA of first sector of this partition / filesystem
+64                  4                   Low 32 bits of LBA of last sector of this partition / filesystem
+68                  4                   High 32 bits of LBA of last sector of this partition / filesystem
+
 
 * For example if total sectors = 4, then actual number of sectors on the disk is 2 ^ (4 + 16) = 2 ^ 20 = 2097152
 ** For example if bytes per sector = 1, then the actual bytes by sector is 2 ^ (1 + 8) = 2 ^ 9 = 512
