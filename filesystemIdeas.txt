@@ -1,6 +1,6 @@
 offset              size                description
 0                   8                   jmp instruction should be padded with nulls or nops up to 8 bytes
-8                   16                  Label. For display purposes only. Only filename characters are allowed
+8                   16                  Label. For display purposes only. Only filename characters are allowed. Should be padded up to 16 bytes
 24                  8                   Number of sectors on the disk.
 32                  1                   Bytes per sector (2 to the power of (this number + 8) gives bytes per sector)*
 33                  1                   Sectors per cluster (2 to the power of this number gives number of sectors per cluster)**
