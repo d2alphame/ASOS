@@ -44,6 +44,7 @@ RELOCATED:
     ; We want to load the remaining sectors in the cluster to which the boot sector belongs.
 
     ; Figure out where the remaining sectors for the first cluster are
+    mov byte [BOOT_DEVICE], dl                      ; Save the boot device
     xor eax, eax
     mov eax, dword [LBA_FIRST]                      ; Get first lba of the filesystem partition
     inc eax                                         ; The sector after that contains the rest of the boot sector's clusters
@@ -62,14 +63,15 @@ RELOCATED:
     jc error_reading_rest_of_boot_image
 
     mov si, SUCCESSFUL_BOOT                         ; Success reading the rest of the cluster. Print the success message
-    call print_null_terminated_string
+    call 0x00:print_null_terminated_string
 
     jmp $
 
 error_reading_rest_of_boot_image:
     mov si, ERROR_READING_REST_OF_BOOT_IMAGE
-    call print_null_terminated_string
+    call 0x00:print_null_terminated_string
     jmp $
+
 
 
 ; Prints a null terminated string. 
@@ -85,7 +87,8 @@ print_null_terminated_string:
         int 10h                                 ; Print it!
         jmp .loop                               ; Read next character
     .done:
-        ret
+        retf
+
 
 ; Prints a null terminated string but also adds a new line to the end
 ; In:
@@ -104,7 +107,7 @@ say_null_terminated_string:
         int 10h
         mov al, 0x0D
         int 10h
-        ret
+        retf
 
 
 ; Prints a string prefixed by its 4-byte length
@@ -126,7 +129,7 @@ print_length_prefixed_string:
         dec ecx
         jmp .loop
     .done:
-        ret
+        retf
 
 
 ; Prints a string prefixed by its 4-byte length and appends a newline
@@ -152,7 +155,7 @@ say_length_prefixed_string:
         int 10h
         mov al, 0x0D
         int 10h
-        ret
+        retf
 
 
 ; Print byte-terminated string
@@ -170,7 +173,7 @@ print_byte_terminated_string:
         int 10h                                 ; Print it!
         jmp .loop                               ; Read next character
     .done:
-        ret
+        retf
 
 
 ; Print byte-terminated string and appends a newline to it
@@ -192,7 +195,44 @@ say_byte_terminated_string:
         int 10h
         mov al, 0x0D
         int 10h
-        ret
+        retf
+
+
+; Prints out the content of the eax register in hexadecimal
+; IN:
+;   EAX: The value to print 
+print_eax_hex:
+    mov edx, eax                                ; Preserve the eax value in edx
+    mov di, EAX_HEX.hexstring
+    mov cx, 0x08                                ; Number of nibbles in a double word
+    mov bx, HEX_DIGITS
+    .loop:
+        rol edx, 0x04
+        mov eax, edx
+        and eax, 0x0F
+        xlatb
+        stosb
+        cmp cx, 0x00
+        je .continue
+        dec cx
+        jmp .loop
+    .continue:
+        ; Print the hexadecimal representation
+        mov bx, 0x0007
+        mov ah, 0x0E
+        mov si, EAX_HEX
+        mov cx, 0x0A
+        .fetch:
+            cmp cx, 0x00
+            je .done
+            lodsb
+            int 10h
+            dec cx
+            jmp .fetch
+    .done:
+        retf
+
+
 
 ; Will be used to read in sectors from the disk. Has to be aligned on a 4 byte boundary
 align 4
@@ -204,8 +244,18 @@ DATA_ACCESS_PACKET:
     .segment            dw 0x00                     ; Segment part of memory location for transfer
     .lba                dq 0x00                     ; LBA of starting sector for transfer. Will be calculated
 
+BOOT_DEVICE: db 0x80
 SUCCESSFUL_BOOT: db "Successful boot", 0x0A, 0x0D, 0x00
 ERROR_READING_REST_OF_BOOT_IMAGE: db "There was an error reading the rest of the boot image", 0x0A, 0x0D, 0x00
+EAX_HEX:
+    .prefix: db "0x"
+    .hexstring: dq 0x00
+HEX_DIGITS: db "0123456789ABCDEF", 0x00
 
 ;times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
-;dw 0xAA55                                            ; The boot signature
+dw 0xAA55                                            ; The boot signature
+
+; ****************************************************************************
+; This is the end of the first sector and the beginning of the next          *
+; The jump table follows. This places the jump table at the 2kb (0x800) mark *
+; ****************************************************************************
