@@ -106,6 +106,54 @@ say_null_terminated_string:
         int 10h
         ret
 
+
+; Prints a string prefixed by its 4-byte length
+; In:
+;   SI: Pointer to string
+; Remarks: Note that SI actually points to the length of
+;          the string which is 4 bytes. So 'lodsd' needs
+;          to be done first the fetch the length.
+print_length_prefixed_string:
+    lodsd                                       ; Reads in the length of the string into eax
+    mov ecx, eax                                ; Move it into ecx, getting out of the way
+    mov ah, 0x0E                                ; Function to print in teletype mode
+    mov bx, 0x0007                              ; Grey text on black background
+    .loop:
+        cmp ecx, 0x00                           ; This means we've printed the entire string
+        je .done
+        lodsb
+        int 10h
+        dec ecx
+        jmp .loop
+    .done:
+        ret
+
+; Prints a string prefixed by its 4-byte length and appends a newline
+; In:
+;   SI: Pointer to string
+; Remarks: Note that SI actually points to the length of
+;          the string which is 4 bytes. So 'lodsd' needs
+;          to be done first the fetch the length.
+say_length_prefixed_string:
+    lodsd                                       ; Reads in the length of the string into eax
+    mov ecx, eax                                ; Move it into ecx, getting out of the way
+    mov ah, 0x0E                                ; Function to print in teletype mode
+    mov bx, 0x0007                              ; Grey text on black background
+    .loop:
+        cmp ecx, 0x00                           ; This means we've printed the entire string
+        je .done
+        lodsb
+        int 10h
+        dec ecx
+        jmp .loop
+    .done:
+        mov al, 0x0A
+        int 10h
+        mov al, 0x0D
+        int 10h
+        ret
+
+
 ; Will be used to read in sectors from the disk. Has to be aligned on a 4 byte boundary
 align 4
 DATA_ACCESS_PACKET:
@@ -119,5 +167,5 @@ DATA_ACCESS_PACKET:
 SUCCESSFUL_BOOT: db "Successful boot", 0x0A, 0x0D, 0x00
 ERROR_READING_REST_OF_BOOT_IMAGE: db "There was an error reading the rest of the boot image", 0x0A, 0x0D, 0x00
 
-times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
-dw 0xAA55                                            ; The boot signature
+;times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
+;dw 0xAA55                                            ; The boot signature
