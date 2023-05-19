@@ -90,4 +90,5 @@ MAIN:
 
 times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
 dw 0xAA55                                            ; The boot signature
+incbin "bootsector.img"
 times 1474560 - ($ - $$) db 0                       ; Pad with more 0s to make up 1.44MB floppy disk
