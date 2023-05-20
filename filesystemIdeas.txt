@@ -30,7 +30,8 @@ Bytes per entry					        = 32
 Total number of bytes for all entries	= 32 * 65536	= 2097152
 Number of sectors reserved for entries	= 2097152 / 512	= 4096
 Number of clusters reserved for entries	= 4096 / 8		= 512
-Number of bytes for miscellaneous use	= 512 * 32		= 65536
+Number of bytes for miscellaneous use	= 512 * 32		= 16384
+
 
 Explanation:
 
@@ -50,7 +51,7 @@ Number of clusters reserved for all entries: 4096 / 8 = 512
 This is the number of clusters that should be reserved for the entries. This assumes 512 bytes per sector and
 8 sectors per cluster
 
-Number of bytes for miscellaneous use: 512 * 32 = 65536
+Number of bytes for miscellaneous use: 512 * 32 = 16384
 This is the total number of bytes available for miscellaneous use. It is actually the file entries that would have
 been used for the reserved clusters. In our case we use these for bootstrap code and other things.
 

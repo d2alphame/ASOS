@@ -65,7 +65,8 @@ RELOCATED:
     mov si, SUCCESSFUL_BOOT                         ; Success reading the rest of the cluster. Print the success message
     call 0x00:print_null_terminated_string
 
-    jmp $
+    jmp 0xA00                                       ; Jump to the remainder of the code. 0x800 to 0x9FF will be for the jump table
+
 
 error_reading_rest_of_boot_image:
     mov si, ERROR_READING_REST_OF_BOOT_IMAGE
@@ -233,6 +234,16 @@ print_eax_hex:
         retf
 
 
+; Prints the newline character
+print_newline:
+    mov bx, 0x0007
+    mov ah, 0x0E
+    mov al, 0x0A
+    int 10h
+    mov al, 0x0D
+    int 10h
+    retf
+
 
 ; Will be used to read in sectors from the disk. Has to be aligned on a 4 byte boundary
 align 4
@@ -259,3 +270,4 @@ dw 0xAA55                                            ; The boot signature
 ; This is the end of the first sector and the beginning of the next          *
 ; The jump table follows. This places the jump table at the 2kb (0x800) mark *
 ; ****************************************************************************
+
