@@ -21,6 +21,8 @@ RESERVED:               dq 0x00                     ; Reserved for future use
 FLAGS:                  dd 0x00                     ; Flags. Not in use for now
 XOR_CHECKSUM:           dd 0x00                     ; XOR checksum of the above struc (starting from the jump instruction down to the flags)
 
+; NOTE: The above data takes up 72 bytes
+
 MAIN:
     cli                                             ; Clear interrupts. No interruptions before we're done setting up
     
@@ -65,7 +67,14 @@ RELOCATED:
     mov si, SUCCESSFUL_BOOT                         ; Success reading the rest of the cluster. Print the success message
     call 0x00:print_null_terminated_string
 
-    jmp 0xA00                                       ; Jump to the remainder of the code. 0x800 to 0x9FF will be for the jump table
+
+    ; Jump to the rest of the code. This boot sector occupies 0x600 to 0x7FF.
+    ; The jump table is located at 0x800 to 0x9FF. 
+    ; More routines are implemented and occupy 0xA00 to 0xBFF
+    ; So the rest of the boot code is at 0xC00
+
+    jmp 0xC00
+
 
 
 error_reading_rest_of_boot_image:
@@ -263,7 +272,7 @@ EAX_HEX:
     .hexstring: dq 0x00
 HEX_DIGITS: db "0123456789ABCDEF", 0x00
 
-;times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
+times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
 dw 0xAA55                                            ; The boot signature
 
 ; ****************************************************************************
@@ -271,3 +280,4 @@ dw 0xAA55                                            ; The boot signature
 ; The jump table follows. This places the jump table at the 2kb (0x800) mark *
 ; ****************************************************************************
 
+%include "jumptable.asm"

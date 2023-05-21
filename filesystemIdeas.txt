@@ -83,11 +83,8 @@ File Entries
 Each file entry is 32 bytes long. And are as follows
 
 field               size                            description
-Filename            28                              Filenames should be padded with spaces up to 30 bytes
+Filename            30                              Filenames should be padded with spaces up to 30 bytes
 File size           2                               This is the actual number of bytes in the file
-Reserved            2                               Reserved*
-
-* This field is actually used by the filesystem's caching mechanism
 
 When the first byte in the filename is null or 0x00, it means that file has been deleted and the cluster
 it occupied is available for reallocation.
