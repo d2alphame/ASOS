@@ -280,4 +280,5 @@ dw 0xAA55                                            ; The boot signature
 ; The jump table follows. This places the jump table at the 2kb (0x800) mark *
 ; ****************************************************************************
 
-%include "jumptable.asm"
+;%include "jumptable.asm"
+%include "bootcont.asm"
