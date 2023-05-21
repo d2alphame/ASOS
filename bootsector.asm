@@ -272,7 +272,7 @@ EAX_HEX:
     .hexstring: dq 0x00
 HEX_DIGITS: db "0123456789ABCDEF", 0x00
 
-times 510 - ($ - $$) db 0                           ; Padd with 0s up to 510 bytes
+times 510 - ($ - $$) db 0                            ; Pad with 0s up to 510 bytes
 dw 0xAA55                                            ; The boot signature
 
 ; ****************************************************************************
