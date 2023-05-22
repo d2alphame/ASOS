@@ -77,6 +77,7 @@ dump_memory_hex:
         int 10h
         lodsb
         int 10h
+        dec cl
         cmp cl, 0x00
         je .newline
         jmp .header_loop
@@ -87,7 +88,38 @@ dump_memory_hex:
         int 10h
     
     pop si                      ; Retrieve the address of the byte to print
+    mov bx, HEX_DIGITS
 
     ; Main loop that prints each line
     .line_loop:
+        mov dx, si
+        mov cl, 0x08
+        .minor_loop:
+            rol dx, 0x04
+            mov ax, dx
+            and ax, 0xF
+            xlatb
+
+    .buffer_ax:
+        mov di, DUMP_LINE_BUFFER
+        mov bx, HEX_DIGITS
+        mov dx, ax
+        mov cl, 0x04
+
+        .buffer_loop:
+            rol dx, 4
+            and ax, 0x000F
+            xlatb
+            stosb
+            dec cl
+            cmp cl, 0x00
+            je .print_buffer
+            jmp .buffer_loop
+
+        .print_buffer:
+
+DUMP_LINE_BUFFER:
+    .address: dd 0x00
+    .values: times 6 dq 0x00
+    .newline: db 0x0A, 0x0D
 
