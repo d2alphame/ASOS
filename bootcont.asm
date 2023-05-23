@@ -55,7 +55,6 @@ dump_memory_hex:
         mov ah, 0x0E
         mov al, 0x0A
         int 10h
-        mov ah, 0x0E
         mov al, 0x0A
         int 10h
 
@@ -67,7 +66,7 @@ dump_memory_hex:
     rep int 10h
 
     mov cl, 0x10
-    push si                     ; Remember to preserve the address of the bytes we want to print
+    push si                         ; Remember to preserve the address of the bytes we want to print
     mov si, HEX_DIGITS
 
     ; Print 2 spaces followed by hex digit
@@ -86,26 +85,38 @@ dump_memory_hex:
         int 10h
         mov al, 0x0D
         int 10h
-    
-    pop si                      ; Retrieve the address of the byte to print
+
+    pop si                          ; Retrieve the address of the byte to print
     mov bx, HEX_DIGITS
+    mov di, DUMP_LINE_BUFFER
 
     ; Main loop that prints each line
     .line_loop:
+        call .buffer_ax             ; Start by printing the address. 
         mov dx, si
-        mov cl, 0x08
-        .minor_loop:
-            rol dx, 0x04
-            mov ax, dx
-            and ax, 0xF
-            xlatb
+        mov cx, 0x10
+        mov al, ' '
+        stosb
+        mov ax, dx
+        shr ax, 4
+        and ax, 0x0F
+        xlatb
+        stosb
+        mov ax, dx
+        and ax, 0x0F
+        xlatb
+        stosb
+        dec cx
+        cmp cx, 0
+        je .print_the_buffer
+
+    .print_the_buffer:
 
     .buffer_ax:
         mov di, DUMP_LINE_BUFFER
         mov bx, HEX_DIGITS
-        mov dx, ax
+        mov dx, si
         mov cl, 0x04
-
         .buffer_loop:
             rol dx, 4
             and ax, 0x000F
@@ -117,9 +128,12 @@ dump_memory_hex:
             jmp .buffer_loop
 
         .print_buffer:
+        ret
+
 
 DUMP_LINE_BUFFER:
     .address: dd 0x00
     .values: times 6 dq 0x00
     .newline: db 0x0A, 0x0D
 
+DUMP_MEMORY_ADDRESS dw 0x00             ; Memory address
