@@ -98,14 +98,16 @@ dump_memory_hex:
         push cx
 
         ; Main loop that prints a line
-        mov cx, 0x10
         call .buffer_the_address             ; Adds to the buffer the printable representation of the said address
+        mov cx, 0x10
 
         .line_loop:
-            mov dx, si
+            ; mov dx, si
             mov al, ' '
             stosb
-            mov ax, dx
+            ; mov ax, dx
+            lodsb
+            mov dx, ax
             shr ax, 4
             and ax, 0x0F
             xlatb
@@ -114,13 +116,16 @@ dump_memory_hex:
             and ax, 0x0F
             xlatb
             stosb
-            inc si
+            ; inc si
             loop .line_loop
+
             call .print_the_buffer      ; Print buffer
 
         ; Check if all 16 lines have been printed
         pop cx
         loop .outer_loop
+
+        jmp $
 
         ; cmp cx, 0               ; This means we've printed 16 lines
         ; jmp .line_loop_done     ; We're done
@@ -136,17 +141,14 @@ dump_memory_hex:
         push si
         push cx
         push bx
-        mov cx, 0x0E
+        mov cx, 0x36
         mov si, DUMP_LINE_BUFFER
         mov bx, 0x0007
         mov ah, 0x0E
         .print_loop:
             lodsb
             int 10h
-            cmp cx, 0
-            je .print_loop_done
-            dec cx
-            jmp .print_loop
+            loop .print_loop
         .print_loop_done:
             pop bx
             pop cx
@@ -155,6 +157,7 @@ dump_memory_hex:
 
     .buffer_the_address:
         mov bx, HEX_DIGITS
+        mov di, DUMP_LINE_BUFFER
         mov dx, si
         mov cl, 0x04
         .buffer_loop:
