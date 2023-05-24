@@ -80,10 +80,7 @@ dump_memory_hex:
         int 10h
         lodsb
         int 10h
-        dec cl
-        cmp cl, 0x00
-        je .newline
-        jmp .header_loop
+        loop .header_loop
     .newline:
         mov al, 0x0A
         int 10h
@@ -91,40 +88,47 @@ dump_memory_hex:
         int 10h
     ; We're done printing the header
 
-    pop si                          ; Retrieve the address of the byte to print
+    pop si                          ; Retrieve the address of the bytes to print
     mov bx, HEX_DIGITS
     mov di, DUMP_LINE_BUFFER
 
     mov cx, 0x10                    ; Number of lines to be printed. Will be used in a loop
-    push cx
-    ; Main loop that prints a line
-    .line_loop:
-        call .buffer_ax             ; Start by printing the address. 
-        mov dx, si
+
+    .outer_loop:
+        push cx
+
+        ; Main loop that prints a line
         mov cx, 0x10
-        mov al, ' '
-        stosb
-        mov ax, dx
-        shr ax, 4
-        and ax, 0x0F
-        xlatb
-        stosb
-        mov ax, dx
-        and ax, 0x0F
-        xlatb
-        stosb
-        dec cx
-        cmp cx, 0
-        call .print_the_buffer
+        call .buffer_the_address             ; Adds to the buffer the printable representation of the said address
+
+        .line_loop:
+            mov dx, si
+            mov al, ' '
+            stosb
+            mov ax, dx
+            shr ax, 4
+            and ax, 0x0F
+            xlatb
+            stosb
+            mov ax, dx
+            and ax, 0x0F
+            xlatb
+            stosb
+            inc si
+            loop .line_loop
+            call .print_the_buffer      ; Print buffer
+
         ; Check if all 16 lines have been printed
         pop cx
-        cmp cx, 0               ; This means we've printed 16 lines
-        jmp .line_loop_done     ; We're done
-        dec cx
-        push cx                 ; Save cx register and continue
-        inc si
-        mov di, DUMP_LINE_BUFFER
-        jmp .line_loop
+        loop .outer_loop
+
+        ; cmp cx, 0               ; This means we've printed 16 lines
+        ; jmp .line_loop_done     ; We're done
+        ; dec cx
+        ; push cx                 ; Save cx register and continue
+        ; inc si
+        ; mov di, DUMP_LINE_BUFFER
+        ; jmp .line_loop
     .line_loop_done:
         retf
 
@@ -149,7 +153,7 @@ dump_memory_hex:
             pop si
             ret
 
-    .buffer_ax:
+    .buffer_the_address:
         mov bx, HEX_DIGITS
         mov dx, si
         mov cl, 0x04
@@ -159,12 +163,12 @@ dump_memory_hex:
             and ax, 0x000F
             xlatb
             stosb
-            dec cl
-            cmp cl, 0x00
-            je .print_buffer
-            jmp .buffer_loop
+            loop .buffer_loop
 
-        .print_buffer:
+        ; mov si, DUMP_LINE_BUFFER
+        ; call 0x00:print_null_terminated_string
+        ; jmp $
+            
         ret
 
 
