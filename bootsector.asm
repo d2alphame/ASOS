@@ -50,7 +50,7 @@ RELOCATED:
     xor eax, eax
     mov eax, dword [LBA_FIRST]                      ; Get first lba of the filesystem partition
     inc eax                                         ; The sector after that contains the rest of the boot sector's clusters
-    mov [DATA_ACCESS_PACKET.lba], eax               ; Figured out.
+    mov dword [DATA_ACCESS_PACKET.lba], eax               ; Figured out.
     mov cl, byte [SECTORS_PER_CLUSTER]              ; Number of sectors to load will be number of sectors in a cluster less 1. Remember boot sector has alredy been loaded
     mov ax, 0x01
     shl ax, cl                                      ; 2 ^ SECTORS_PER_CLUSTER = Number of sectors per cluster
@@ -59,7 +59,7 @@ RELOCATED:
     
     ; Read in the sectors using 13h Extended routines. Note that dl still contains the boot device
     ; since it has not been touched
-    mov ah, 0x43                                    ; Function to read sectors from the disk
+    mov ah, 0x42                                    ; Function to read sectors from the disk
     mov si, DATA_ACCESS_PACKET                      ; Point to the data access packet
     int 13h
     jc error_reading_rest_of_boot_image
@@ -67,14 +67,13 @@ RELOCATED:
     mov si, SUCCESSFUL_BOOT                         ; Success reading the rest of the cluster. Print the success message
     call 0x00:print_null_terminated_string
 
+    
 
     ; Jump to the rest of the code. This boot sector occupies 0x600 to 0x7FF.
     ; The jump table is located at 0x800 to 0x9FF. 
     ; More routines are implemented and occupy 0xA00 to 0xBFF
     ; So the rest of the boot code is at 0xC00
-
-    jmp 0xC00
-
+    jmp 0x00:TEST
 
 
 error_reading_rest_of_boot_image:
@@ -280,5 +279,5 @@ dw 0xAA55                                            ; The boot signature
 ; The jump table follows. This places the jump table at the 2kb (0x800) mark *
 ; ****************************************************************************
 
-;%include "jumptable.asm"
+%include "jumptable.asm"
 %include "bootcont.asm"
