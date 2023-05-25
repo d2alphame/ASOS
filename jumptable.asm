@@ -17,5 +17,7 @@ jmp 0x00:say_eax_hex
 align 8
 jmp 0x00:print_newline
 align 8
+jmp 0x00:dump_memory_hex
+align 8
 
 times 512 - ($ - JUMP_TABLE) db 0           ; Pad up to make 512 bytes

@@ -1,5 +1,7 @@
 ; Continuation for the boot sequence. More system call routines are here
 
+MORE_SYSTEMS_ROUTINES:
+
 ; Prints out the content of the eax register in heaxadecimal
 ; and appends a newline
 say_eax_hex:
@@ -102,10 +104,8 @@ dump_memory_hex:
         mov cx, 0x10
 
         .line_loop:
-            ; mov dx, si
             mov al, ' '
             stosb
-            ; mov ax, dx
             lodsb
             mov dx, ax
             shr ax, 4
@@ -116,25 +116,13 @@ dump_memory_hex:
             and ax, 0x0F
             xlatb
             stosb
-            ; inc si
             loop .line_loop
 
             call .print_the_buffer      ; Print buffer
 
         ; Check if all 16 lines have been printed
         pop cx
-        loop .outer_loop
-
-        jmp $
-
-        ; cmp cx, 0               ; This means we've printed 16 lines
-        ; jmp .line_loop_done     ; We're done
-        ; dec cx
-        ; push cx                 ; Save cx register and continue
-        ; inc si
-        ; mov di, DUMP_LINE_BUFFER
-        ; jmp .line_loop
-    .line_loop_done:
+        loop .outer_loop                ; Loop to print next line if we're not done
         retf
 
     .print_the_buffer:
@@ -167,11 +155,6 @@ dump_memory_hex:
             xlatb
             stosb
             loop .buffer_loop
-
-        ; mov si, DUMP_LINE_BUFFER
-        ; call 0x00:print_null_terminated_string
-        ; jmp $
-            
         ret
 
 
@@ -180,8 +163,7 @@ DUMP_LINE_BUFFER:
     .values: times 6 dq 0x00
     .newline: db 0x0A, 0x0D
 
-DUMP_MEMORY_ADDRESS dw 0x00             ; Memory address
-times 512 - ($ - say_eax_hex) db 0x00
+times 512 - ($ - MORE_SYSTEMS_ROUTINES) db 0x00
 
 TEST:
 mov si, 0x7C00
