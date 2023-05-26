@@ -137,11 +137,10 @@ dump_memory_hex:
             lodsb
             int 10h
             loop .print_loop
-        .print_loop_done:
-            pop bx
-            pop cx
-            pop si
-            ret
+        pop bx
+        pop cx
+        pop si
+        ret
 
     .buffer_the_address:
         mov bx, HEX_DIGITS
