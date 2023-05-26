@@ -75,7 +75,7 @@ RELOCATED:
     ; So the rest of the boot code is at 0xC00
     mov si, .the_string
     mov al, '$'
-    call 0x00:print_byte_terminated_string
+    call 0x00:say_byte_terminated_string
     jmp $
 
     .length_prefixed_string: dd 0x04
