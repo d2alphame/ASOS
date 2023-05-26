@@ -74,7 +74,7 @@ RELOCATED:
     ; More routines are implemented and occupy 0xA00 to 0xBFF
     ; So the rest of the boot code is at 0xC00
     mov si, .length_prefixed_string
-    call 0x00:print_length_prefixed_string
+    call 0x00:say_length_prefixed_string
     jmp $
 
     .length_prefixed_string: dd 0x04
@@ -155,13 +155,12 @@ say_length_prefixed_string:
     mov ecx, eax                                ; Move it into ecx, getting out of the way
     mov ah, 0x0E                                ; Function to print in teletype mode
     mov bx, 0x0007                              ; Grey text on black background
+    cmp ecx, 0x00                           ; This means we've printed the entire string
+    je .done
     .loop:
-        cmp ecx, 0x00                           ; This means we've printed the entire string
-        je .done
         lodsb
         int 10h
-        dec ecx
-        jmp .loop
+        loop .loop
     .done:
         mov al, 0x0A
         int 10h
