@@ -74,7 +74,7 @@ RELOCATED:
     ; More routines are implemented and occupy 0xA00 to 0xBFF
     ; So the rest of the boot code is at 0xC00
     mov eax, 0xB16B00B5
-    call 0x00:say_eax_hex
+    call 0x00:print_newline
     jmp $
 
 
