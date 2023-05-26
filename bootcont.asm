@@ -156,15 +156,14 @@ dump_memory_hex:
             loop .buffer_loop
         ret
 
-
 DUMP_LINE_BUFFER:
     .address: dd 0x00
     .values: times 6 dq 0x00
     .newline: db 0x0A, 0x0D
 
-times 512 - ($ - MORE_SYSTEMS_ROUTINES) db 0x00
+;times 512 - ($ - MORE_SYSTEMS_ROUTINES) db 0x00
 
-TEST:
-mov si, 0x7C00
-call 0x00:dump_memory_hex
-jmp $
+; TEST:
+; mov si, 0x7C00
+; call 0x00:dump_memory_hex
+; jmp $

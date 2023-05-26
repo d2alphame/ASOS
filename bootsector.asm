@@ -73,8 +73,12 @@ RELOCATED:
     ; The jump table is located at 0x800 to 0x9FF. 
     ; More routines are implemented and occupy 0xA00 to 0xBFF
     ; So the rest of the boot code is at 0xC00
-    jmp 0x00:TEST
+    mov si, .length_prefixed_string
+    call 0x00:print_length_prefixed_string
+    jmp $
 
+    .length_prefixed_string: dd 0x04
+    .the_string: db "This"
 
 error_reading_rest_of_boot_image:
     mov si, ERROR_READING_REST_OF_BOOT_IMAGE
@@ -130,13 +134,12 @@ print_length_prefixed_string:
     mov ecx, eax                                ; Move it into ecx, getting out of the way
     mov ah, 0x0E                                ; Function to print in teletype mode
     mov bx, 0x0007                              ; Grey text on black background
+    cmp ecx, 0x00                               ; This means we've printed the entire string
+    je .done
     .loop:
-        cmp ecx, 0x00                           ; This means we've printed the entire string
-        je .done
         lodsb
         int 10h
-        dec ecx
-        jmp .loop
+        loop .loop
     .done:
         retf
 
