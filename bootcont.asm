@@ -15,27 +15,21 @@ say_eax_hex:
         and eax, 0x0F
         xlatb
         stosb
-        cmp cx, 0x00
-        je .continue
-        dec cx
-        jmp .loop
-    .continue:
-        ; Print the hexadecimal representation
-        mov bx, 0x0007
-        mov ah, 0x0E
-        mov si, EAX_HEX
-        mov cx, 0x0A
-        .fetch:
-            cmp cx, 0x00
-            je .done
-            lodsb
-            int 10h
-            dec cx
-            jmp .fetch
+        loop .loop
+    ; Print the hexadecimal representation
+    mov bx, 0x0007
+    mov ah, 0x0E
+    mov si, EAX_HEX
+    mov cx, 0x0A
+    .fetch:
+        lodsb
+        int 10h
+        loop .fetch
     .done:
         mov al, 0x0D
         int 10h
         mov al, 0x0A
+        int 10h
         retf
 
 

@@ -73,13 +73,10 @@ RELOCATED:
     ; The jump table is located at 0x800 to 0x9FF. 
     ; More routines are implemented and occupy 0xA00 to 0xBFF
     ; So the rest of the boot code is at 0xC00
-    mov si, .the_string
-    mov al, '$'
-    call 0x00:say_byte_terminated_string
+    mov eax, 0xB16B00B5
+    call 0x00:say_eax_hex
     jmp $
 
-    .length_prefixed_string: dd 0x04
-    .the_string: db "This$"
 
 error_reading_rest_of_boot_image:
     mov si, ERROR_READING_REST_OF_BOOT_IMAGE
@@ -224,25 +221,18 @@ print_eax_hex:
         and eax, 0x0F
         xlatb
         stosb
-        cmp cx, 0x00
-        je .continue
-        dec cx
-        jmp .loop
-    .continue:
-        ; Print the hexadecimal representation
-        mov bx, 0x0007
-        mov ah, 0x0E
-        mov si, EAX_HEX
-        mov cx, 0x0A
-        .fetch:
-            cmp cx, 0x00
-            je .done
-            lodsb
-            int 10h
-            dec cx
-            jmp .fetch
-    .done:
-        retf
+        loop .loop
+
+    ; Print the hexadecimal representation
+    mov bx, 0x0007
+    mov ah, 0x0E
+    mov si, EAX_HEX
+    mov cx, 0x0A
+    .fetch:
+        lodsb
+        int 10h
+        loop .fetch
+    retf
 
 
 ; Prints the newline character
