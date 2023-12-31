@@ -66,17 +66,16 @@ RELOCATED:
 
     mov si, SUCCESSFUL_BOOT                         ; Success reading the rest of the cluster. Print the success message
     call 0x00:print_null_terminated_string
-
+    jmp $
     
 
     ; Jump to the rest of the code. This boot sector occupies 0x600 to 0x7FF.
     ; The jump table is located at 0x800 to 0x9FF. 
     ; More routines are implemented and occupy 0xA00 to 0xBFF
     ; So the rest of the boot code is at 0xC00
-    mov eax, 0xB16B00B5
-    call 0x00:print_newline
-    jmp $
-
+    ; mov eax, 0xB16B00B5
+    ; call 0x00:print_eax_hex
+    ; jmp $
 
 error_reading_rest_of_boot_image:
     mov si, ERROR_READING_REST_OF_BOOT_IMAGE
