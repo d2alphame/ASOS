@@ -1,0 +1,13 @@
+The installation floppy of ASOS is laid out as follows:
+
+ASOS makes use of only the first 2 tracks on the installation floppy.
+On each track, only the first 2 sectors are for the installer's code.
+The rest of the sectors on each of those tracks then contains the os code to be installed.
+
+Each track on the 1.44MB floppy has 18 sectors each.
+The first two sectors on the first track as well as the first two sectors of the second
+track contain the installer's code. This means ASOS's installer is 2KB (512 bytes per sector).
+
+The operating system's code then occupies the remaining 16 sectors on each of the first two
+tracks. This makes a total of 32 sectors. So the OS code is 16KB long
+(i.e. 32 sectors * 512 bytes per sector)
