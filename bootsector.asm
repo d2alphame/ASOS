@@ -21,7 +21,7 @@ RESERVED:               dq 0x00                     ; Reserved for future use
 FLAGS:                  dd 0x00                     ; Flags. Not in use for now
 XOR_CHECKSUM:           dd 0x00                     ; XOR checksum of the above struc (starting from the jump instruction down to the flags)
 
-; NOTE: The above data takes up 72 bytes
+; NOTE: The above data takes up 80 bytes
 
 MAIN:
     cli                                             ; Clear interrupts. No interruptions before we're done setting up
