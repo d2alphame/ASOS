@@ -80,11 +80,12 @@ should be loaded after every 128 scans
 
 File Entries
 ============
-Each file entry is 32 bytes long. And are as follows
+Each file entry is 64 bytes long. And are as follows
 
 field               size                            description
-Filename            30                              Filenames should be padded with spaces up to 30 bytes
+Filename            60                              Filenames should be padded with spaces up to 30 bytes.
 File size           2                               This is the actual number of bytes in the file
+Cluster             2                               The cluster number where the file is stored.
 
 When the first byte in the filename is null or 0x00, it means that file has been deleted and the cluster
 it occupied is available for reallocation.
