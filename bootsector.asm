@@ -235,14 +235,14 @@ say_byte_terminated_string:
 
 
 ; Prints the newline character
-; print_newline:
-;     mov bx, 0x0007
-;     mov ah, 0x0E
-;     mov al, 0x0A
-;     int 10h
-;     mov al, 0x0D
-;     int 10h
-;     retf
+print_newline:
+    mov bx, 0x0007
+    mov ah, 0x0E
+    mov al, 0x0A
+    int 10h
+    mov al, 0x0D
+    int 10h
+    retf
 
 
 ; Will be used to read in sectors from the disk. Has to be aligned on a 4 byte boundary
