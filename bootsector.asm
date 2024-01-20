@@ -209,40 +209,40 @@ say_byte_terminated_string:
 ; Prints out the content of the eax register in hexadecimal
 ; IN:
 ;   EAX: The value to print 
-print_eax_hex:
-    mov edx, eax                                ; Preserve the eax value in edx
-    mov di, EAX_HEX.hexstring
-    mov cx, 0x08                                ; Number of nibbles in a double word
-    mov bx, HEX_DIGITS
-    .loop:
-        rol edx, 0x04
-        mov eax, edx
-        and eax, 0x0F
-        xlatb
-        stosb
-        loop .loop
-
-    ; Print the hexadecimal representation
-    mov bx, 0x0007
-    mov ah, 0x0E
-    mov si, EAX_HEX
-    mov cx, 0x0A
-    .fetch:
-        lodsb
-        int 10h
-        loop .fetch
-    retf
+; print_eax_hex:
+;     mov edx, eax                                ; Preserve the eax value in edx
+;     mov di, EAX_HEX.hexstring
+;     mov cx, 0x08                                ; Number of nibbles in a double word
+;     mov bx, HEX_DIGITS
+;     .loop:
+;         rol edx, 0x04
+;         mov eax, edx
+;         and eax, 0x0F
+;         xlatb
+;         stosb
+;         loop .loop
+; 
+;     ; Print the hexadecimal representation
+;     mov bx, 0x0007
+;     mov ah, 0x0E
+;     mov si, EAX_HEX
+;     mov cx, 0x0A
+;     .fetch:
+;         lodsb
+;         int 10h
+;         loop .fetch
+;     retf
 
 
 ; Prints the newline character
-print_newline:
-    mov bx, 0x0007
-    mov ah, 0x0E
-    mov al, 0x0A
-    int 10h
-    mov al, 0x0D
-    int 10h
-    retf
+; print_newline:
+;     mov bx, 0x0007
+;     mov ah, 0x0E
+;     mov al, 0x0A
+;     int 10h
+;     mov al, 0x0D
+;     int 10h
+;     retf
 
 
 ; Will be used to read in sectors from the disk. Has to be aligned on a 4 byte boundary
@@ -263,7 +263,12 @@ EAX_HEX:
     .hexstring: dq 0x00
 HEX_DIGITS: db "0123456789ABCDEF", 0x00
 
-times 510 - ($ - $$) db 0                            ; Pad with 0s up to 510 bytes
+; times 510 - ($ - $$) db 0                            ; Pad with 0s up to 510 bytes
+
+; Pad up to 446 bytes. At byte 446 we should have the Master Boot Record
+; times 446 - ($ - $$) db 0
+MBR: times 64 db 0          ; The Master Boot Record. Fill with zeros for now
+
 dw 0xAA55                                            ; The boot signature
 
 ; ****************************************************************************
@@ -271,5 +276,5 @@ dw 0xAA55                                            ; The boot signature
 ; The jump table follows. This places the jump table at the 2kb (0x800) mark *
 ; ****************************************************************************
 
-%include "jumptable.asm"
-%include "bootcont.asm"
+; %include "jumptable.asm"
+; %include "bootcont.asm"
