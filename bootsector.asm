@@ -66,8 +66,10 @@ RELOCATED:
 
     mov si, SUCCESSFUL_BOOT                         ; Success reading the rest of the cluster. Print the success message
     call 0x00:print_null_terminated_string
-    jmp $
+    ; jmp $
     
+    jmp read_asos_boot_extras                       ; Continue with reading the asos boot extras file
+
 
     ; Jump to the rest of the code. This boot sector occupies 0x600 to 0x7FF.
     ; The jump table is located at 0x800 to 0x9FF. 
@@ -82,6 +84,19 @@ error_reading_rest_of_boot_image:
     call 0x00:print_null_terminated_string
     jmp $
 
+
+; Loops until a given key with the ascii code is pressed.
+;   In AL: ASCII of key to wait for
+;   Out AL: ASCII of the key
+wait_for_key_ascii:
+    mov dl, al
+    .loop:
+        mov ah, 0x00                    ; BIOS function to get key
+        int 16h                         ; Keyboard interrupt
+        cmp al, dl                      ; Check if it's the key we're waiting for
+        jnz .loop                       ; Continue waiting if it's not
+
+    retf
 
 
 ; Prints a null terminated string. 
@@ -205,35 +220,6 @@ say_byte_terminated_string:
         int 10h
         retf
 
-
-; Prints out the content of the eax register in hexadecimal
-; IN:
-;   EAX: The value to print 
-; print_eax_hex:
-;     mov edx, eax                                ; Preserve the eax value in edx
-;     mov di, EAX_HEX.hexstring
-;     mov cx, 0x08                                ; Number of nibbles in a double word
-;     mov bx, HEX_DIGITS
-;     .loop:
-;         rol edx, 0x04
-;         mov eax, edx
-;         and eax, 0x0F
-;         xlatb
-;         stosb
-;         loop .loop
-; 
-;     ; Print the hexadecimal representation
-;     mov bx, 0x0007
-;     mov ah, 0x0E
-;     mov si, EAX_HEX
-;     mov cx, 0x0A
-;     .fetch:
-;         lodsb
-;         int 10h
-;         loop .fetch
-;     retf
-
-
 ; Prints the newline character
 print_newline:
     mov bx, 0x0007
@@ -263,11 +249,11 @@ EAX_HEX:
     .hexstring: dq 0x00
 HEX_DIGITS: db "0123456789ABCDEF", 0x00
 
-; times 510 - ($ - $$) db 0                            ; Pad with 0s up to 510 bytes
+; times 510 - ($ - $$) db 0                          ; Pad with 0s up to 510 bytes
 
 ; Pad up to 446 bytes. At byte 446 we should have the Master Boot Record
-; times 446 - ($ - $$) db 0
-MBR: times 64 db 0          ; The Master Boot Record. Fill with zeros for now
+times 446 - ($ - $$) db 0
+MBR: times 64 db 0                                   ; The Master Boot Record. Fill with zeros for now
 
 dw 0xAA55                                            ; The boot signature
 
@@ -278,3 +264,5 @@ dw 0xAA55                                            ; The boot signature
 
 ; %include "jumptable.asm"
 ; %include "bootcont.asm"
+
+read_asos_boot_extras:

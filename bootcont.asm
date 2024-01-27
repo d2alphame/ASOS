@@ -1,6 +1,33 @@
-; Continuation for the boot sequence. More system call routines are here
-
 MORE_SYSTEMS_ROUTINES:
+
+
+; Prints out the content of the eax register in hexadecimal
+; IN:
+;   EAX: The value to print 
+print_eax_hex:
+    mov edx, eax                                ; Preserve the eax value in edx
+    mov di, EAX_HEX.hexstring
+    mov cx, 0x08                                ; Number of nibbles in a double word
+    mov bx, HEX_DIGITS
+    .loop:
+        rol edx, 0x04
+        mov eax, edx
+        and eax, 0x0F
+        xlatb
+        stosb
+        loop .loop
+
+    ; Print the hexadecimal representation
+    mov bx, 0x0007
+    mov ah, 0x0E
+    mov si, EAX_HEX
+    mov cx, 0x0A
+    .fetch:
+        lodsb
+        int 10h
+        loop .fetch
+    retf
+
 
 ; Prints out the content of the eax register in heaxadecimal
 ; and appends a newline
