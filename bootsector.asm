@@ -66,9 +66,8 @@ RELOCATED:
 
     mov si, SUCCESSFUL_BOOT                         ; Success reading the rest of the cluster. Print the success message
     call 0x00:print_null_terminated_string
-    ; jmp $
     
-    jmp read_asos_boot_extras                       ; Continue with reading the asos boot extras file
+    jmp READ_ASOS_BOOT_EXTRAS                       ; Continue with reading the asos boot extras file
 
 
     ; Jump to the rest of the code. This boot sector occupies 0x600 to 0x7FF.
@@ -249,7 +248,6 @@ EAX_HEX:
     .hexstring: dq 0x00
 HEX_DIGITS: db "0123456789ABCDEF", 0x00
 
-; times 510 - ($ - $$) db 0                          ; Pad with 0s up to 510 bytes
 
 ; Pad up to 446 bytes. At byte 446 we should have the Master Boot Record
 times 446 - ($ - $$) db 0
@@ -263,6 +261,5 @@ dw 0xAA55                                            ; The boot signature
 ; ****************************************************************************
 
 ; %include "jumptable.asm"
-; %include "bootcont.asm"
-
-read_asos_boot_extras:
+%include "bootcont.asm"
+; times 536870912 - ($ - $$) db 0

@@ -1,6 +1,21 @@
 MORE_SYSTEMS_ROUTINES:
 
 
+; Loops until a given key with the scancode is pressed.
+;   In AL: Scancode of key to wait for
+;   Out AH: Scancode of the key
+;       AL: ASCII of the key, if the key has no ascii, this would be 0
+wait_for_key_scancode:
+    mov dl, ah
+    .loop:
+        mov ah, 0x00                    ; BIOS function to get key
+        int 16h                         ; Keyboard interrupt
+        cmp ah, dl                      ; Check if it's the key we're waiting for
+        jnz .loop                       ; Continue waiting if it's not
+
+    retf
+
+
 ; Prints out the content of the eax register in hexadecimal
 ; IN:
 ;   EAX: The value to print 
@@ -298,7 +313,13 @@ dump_memory_ascii:
         ret
 
 
-
+READ_ASOS_BOOT_EXTRAS:
+    mov al, 65
+    call 0x00:wait_for_key_ascii
+    mov ah, 0x0E
+    mov bx, 0x0007
+    int 10h
+    jmp $
 
 DUMP_LINE_BUFFER_HEX:
     .address: dd 0x00
@@ -310,7 +331,7 @@ DUMP_LINE_BUFFER_ASCII:
     
 
 
-;times 512 - ($ - MORE_SYSTEMS_ROUTINES) db 0x00
+; times 512 - ($ - MORE_SYSTEMS_ROUTINES) db 0x00
 
 ; TEST:
 ; mov si, 0x7C00
