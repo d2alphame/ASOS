@@ -14,8 +14,10 @@ SECTORS_PER_CLUSTER:    db 0x03                     ; 2 ^ 3 = 8. Using 8 sectors
 FS_VERSION:             dw 0x0100                   ; Version 1.0. Major version in upper byte, minor version in lower byte
 SIGNATURE:              dw 0xA51                    ; Signature of the tool, program, or system that created this filesystem
 LAST_CLUSTER:           dw 0xFFFF                   ; Number of clusters that make up this filesystem - 1. This implies there are 0x10000 (65536) clusters
-LBA_FIRST:              dq 0x00                     ; LBA of first sector of this filesystem
-LBA_LAST:               dq 0x7FFFF                  ; LBA of last sector of the filesystem
+LBA_FIRST_LOW:          dd 0x00                     ; Lower 32 bits of LBA of first sector of this filesystem
+LBA_FIRST_HIGH:         dd 0x00                     ; Upper 32 bits of LBA of first sector of this filesystem
+LBA_LAST_LOW:           dd 0x7FFFF                  ; Lower 32 bits of LBA of last sector of the filesystem
+LBA_LAST_HIGH:          dd 0x00                     ; Upper 32 bits of LBA of last sector of the filesystem
 FREE_FOR_CUSTOM_USE:    dq 0x00                     ; Free for custom use
 RESERVED:               dq 0x00                     ; Reserved for future use
 FLAGS:                  dd 0x00                     ; Flags. Not in use for now
@@ -42,23 +44,40 @@ MAIN:
     jmp 0x00:RELOCATED
 
 RELOCATED:
-    ; Now we've successfully made the jump to the new location in memory. We may happily continue
-    ; We want to load the remaining sectors in the cluster to which the boot sector belongs.
-
-    ; Figure out where the remaining sectors for the first cluster are
+    ; Now we've successfully made the jump to the new location in memory, we may happily continue.
+    ; Most important thing right now is to save the boot device
+    
     mov byte [BOOT_DEVICE], dl                      ; Save the boot device
+    push dx                                         ; Also preserve it on the stack
+
+    ; We want to load the remaining sectors in the cluster to which the boot sector belongs.
+    ; Figure out where the remaining sectors for the first cluster are
+
     xor eax, eax
-    mov eax, dword [LBA_FIRST]                      ; Get first lba of the filesystem partition
-    inc eax                                         ; The sector after that contains the rest of the boot sector's clusters
-    mov dword [DATA_ACCESS_PACKET.lba], eax               ; Figured out.
+    xor edx, edx
+
+    ; Get LBA of first sector (low 32 bits in eax, high 32 bits in edx) and add 1.
+    ; Remember the first sector is the boot sector which has already been loaded, so
+    ; we just need the second sector and the rest
+    mov eax, dword [LBA_FIRST_LOW]
+    mov edx, dword [LBA_FIRST_HIGH]
+    add eax, 1
+    jnc .continue
+    inc edx
+
+.continue:
+    ; After figuring out where the remaining sectors for booting are on disk, we can now load them
+    mov dword [DATA_ACCESS_PACKET.lba_low], eax
+    mov dword [DATA_ACCESS_PACKET.lba_high], edx
     mov cl, byte [SECTORS_PER_CLUSTER]              ; Number of sectors to load will be number of sectors in a cluster less 1. Remember boot sector has alredy been loaded
     mov ax, 0x01
     shl ax, cl                                      ; 2 ^ SECTORS_PER_CLUSTER = Number of sectors per cluster
     dec ax                                          ; Because the boot sector has already been loaded
     mov word [DATA_ACCESS_PACKET.sector_count], ax
+    mov word [DATA_ACCESS_PACKET.offset], 0x800     ; Memory offset to load the sectors into
     
-    ; Read in the sectors using 13h Extended routines. Note that dl still contains the boot device
-    ; since it has not been touched
+    ; Read in the sectors using 13h Extended routines.
+    pop dx                                          ; Get back the boot device that was saved earlier
     mov ah, 0x42                                    ; Function to read sectors from the disk
     mov si, DATA_ACCESS_PACKET                      ; Point to the data access packet
     int 13h
@@ -67,8 +86,8 @@ RELOCATED:
     mov si, SUCCESSFUL_BOOT                         ; Success reading the rest of the cluster. Print the success message
     call 0x00:print_null_terminated_string
     
-    jmp READ_ASOS_BOOT_EXTRAS                       ; Continue with reading the asos boot extras file
-
+    ; jmp READ_ASOS_BOOT_EXTRAS                       ; Continue with reading the asos boot extras file
+    jmp $
 
 error_reading_rest_of_boot_image:
     mov si, ERROR_READING_REST_OF_BOOT_IMAGE
@@ -228,17 +247,14 @@ DATA_ACCESS_PACKET:
     .packet_size:       db 0x10                     ; Size of this packet in bytes. This is 16 bytes
     .unused:            db 0x00                     ; Field unused
     .sector_count       dw 0x00                     ; Number of sectors to transfer. This will be calculated
-    .offset             dw 0x800                    ; Offset part of memory location for transfer
+    .offset             dw 0x00                     ; Offset part of memory location for transfer
     .segment            dw 0x00                     ; Segment part of memory location for transfer
-    .lba                dq 0x00                     ; LBA of starting sector for transfer. Will be calculated
+    .lba_low            dd 0x00                     ; Low 32 bits of LBA of starting sector for transfer. Will be calculated
+    .lba_high           dd 0x00                     ; High 32 bits of LBA of starting sector for transfer. Will be calculated
 
 BOOT_DEVICE: db 0x80
 SUCCESSFUL_BOOT: db "Successful boot", 0x0A, 0x0D, 0x00
 ERROR_READING_REST_OF_BOOT_IMAGE: db "There was an error reading the rest of the boot image", 0x0A, 0x0D, 0x00
-EAX_HEX:
-    .prefix: db "0x"
-    .hexstring: dq 0x00
-HEX_DIGITS: db "0123456789ABCDEF", 0x00
 
 
 ; Pad up to 446 bytes. At byte 446 we should have the Master Boot Record
@@ -253,5 +269,6 @@ dw 0xAA55                                            ; The boot signature
 ; ****************************************************************************
 
 ; %include "jumptable.asm"
-%include "bootcont.asm"
+; %include "bootcont.asm"
+  %include "bootcont2.asm"
 ; times 536870912 - ($ - $$) db 0

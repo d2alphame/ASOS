@@ -329,6 +329,10 @@ DUMP_LINE_BUFFER_HEX:
 DUMP_LINE_BUFFER_ASCII:
     .address: dd 0x00
     
+EAX_HEX:
+    .prefix: db "0x"
+    .hexstring: dq 0x00
+HEX_DIGITS: db "0123456789ABCDEF", 0x00
 
 
 ; times 512 - ($ - MORE_SYSTEMS_ROUTINES) db 0x00
