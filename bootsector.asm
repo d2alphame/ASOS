@@ -13,7 +13,7 @@ BYTES_PER_SECTOR:       db 0x01                     ; 2 ^ (1 + 8) = 2 ^ 9 = 512
 SECTORS_PER_CLUSTER:    db 0x03                     ; 2 ^ 3 = 8. Using 8 sectors per cluster
 FS_VERSION:             dw 0x0100                   ; Version 1.0. Major version in upper byte, minor version in lower byte
 SIGNATURE:              dw 0xA51                    ; Signature of the tool, program, or system that created this filesystem
-LAST_CLUSTER:           dw 0xFFFF                   ; Number of clusters that make up this filesystem - 1. This implies there are 0x10000 (65536) clusters
+LAST_CLUSTER:           dw 0xFFFF                   ; Cluster number of the last cluster (starts from 0). Max is 0xFFFF (65535)
 LBA_FIRST_LOW:          dd 0x00                     ; Lower 32 bits of LBA of first sector of this filesystem
 LBA_FIRST_HIGH:         dd 0x00                     ; Upper 32 bits of LBA of first sector of this filesystem
 LBA_LAST_LOW:           dd 0x7FFFF                  ; Lower 32 bits of LBA of last sector of the filesystem
