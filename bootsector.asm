@@ -269,7 +269,7 @@ dw 0xAA55                                            ; The boot signature
 ; ****************************************************************************
 
 ; %include "jumptable.asm"
-; %include "bootcont.asm"
+  %include "bootcont.asm"
   %include "bootcont2.asm"
 
   times 65536 - ($ - $$) db 0

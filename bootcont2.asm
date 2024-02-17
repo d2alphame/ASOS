@@ -22,6 +22,7 @@ find_file:
     mov ecx, eax                        ; Put it in ecx in preparation for the rep movsb instruction
     rep movsb                           ; Copy the filename to the buffer
 
+
     ; Now we have a space-padded filename string
 
     ; Read in cluster number 16 to 1023 (in a loop) and search for the filename within the cluster
@@ -30,14 +31,6 @@ find_file:
     mov ax, 0x10                        ; Cluster number to read. We want clusters 16 to 1023
     
 .outer_loop:
-
-    
-    mov ah, 0x0E
-    mov al, 'F'
-    mov bx, 0x0007
-    int 10h
-
-
     call read_clusters
         jc .error
     
@@ -66,8 +59,9 @@ find_file:
         clc
         pop di
         sub si, 60
-        mov cx, 64
+        mov ecx, 64
         rep movsb
+        sub di, 64
         retf
 
     .error:
@@ -82,14 +76,6 @@ find_file:
 ; IN ax Cluster number of the cluster to read (0 - 65535)
 ;    dx:bx Memory location of where clusters should be loaded
 read_clusters:
-
-
-        mov ah, 0x0E
-        mov al, 'R'
-        mov bx, 0x0007
-        int 10h
-        jmp $
-
 
     ; Can't load a cluster greater than the last cluster, duh.
     cmp ax, word [LAST_CLUSTER]
@@ -162,14 +148,21 @@ read_clusters:
 
 
 find_sample:
+    
+    xor esi, esi
+    xor edi, edi
+ 
     mov si, .FLEN
     mov di, .FILE_ENT
     call 0x00:find_file
-    mov si, di
-    mov al, ' '
-    call 0x00:print_byte_terminated_string
+
+    mov si, .FILE_PPT
+    lodsd
+    call 0x00:say_eax_hex
     jmp $
+
     .FLEN: dd 6
     .FILENAME: db "Sample"
-    .FILE_ENT: times 64 db 0
+    .FILE_ENT: times 60 db 0
+    .FILE_PPT: dd 0
     

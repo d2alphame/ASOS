@@ -314,12 +314,12 @@ dump_memory_ascii:
 
 
 READ_ASOS_BOOT_EXTRAS:
-    mov al, 65
-    call 0x00:wait_for_key_ascii
-    mov ah, 0x0E
-    mov bx, 0x0007
-    int 10h
-    jmp $
+    ; mov al, 65
+    ; call 0x00:wait_for_key_ascii
+    ; mov ah, 0x0E
+    ; mov bx, 0x0007
+    ; int 10h
+    ; jmp $
 
 DUMP_LINE_BUFFER_HEX:
     .address: dd 0x00
