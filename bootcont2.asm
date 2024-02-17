@@ -4,18 +4,21 @@ MORE_SYSTEMS_ROUTINES_2:
 ; IN:   SI  Pointer to the length prefixed string of the file's name
 ;       DI  Pointer to where file entry should be placed if the file is found.
 ;           This should be at least 64 bytes.
-; OUT:  If found, SI will point to the file's entry (i.e. its name, cluster
+; OUT:  If found, DI will point to the file's entry (i.e. its name, cluster
 ;      number and size)
 find_file:
     
+    push di
+
     ; Start by filling up the filename buffer with 60 spaces
     mov di, .FILE_NAME_BUFFER
-    mov cx, 60
+    mov ecx, 60
     mov al, ' '
     rep stosb
 
     ; Copy the file's name from SI, into the buffer
     lodsd                               ; Read in the length of the file name
+    mov di, .FILE_NAME_BUFFER
     mov ecx, eax                        ; Put it in ecx in preparation for the rep movsb instruction
     rep movsb                           ; Copy the filename to the buffer
 
@@ -27,7 +30,16 @@ find_file:
     mov ax, 0x10                        ; Cluster number to read. We want clusters 16 to 1023
     
 .outer_loop:
+
+    
+    mov ah, 0x0E
+    mov al, 'F'
+    mov bx, 0x0007
+    int 10h
+
+
     call read_clusters
+        jc .error
     
         mov si, bx
         mov cx, 64
@@ -38,7 +50,7 @@ find_file:
             repz cmpsb
             pop cx                      ; We pop cx before the jump (next instruction) in order to prevent stack overflow
             jz .found
-            add si, 4
+            add si, 4                   ; Skip over last 4 bytes of the file entry we just checked
             loop .inner_loop
     inc ax
     cmp ax, 1023
@@ -46,11 +58,21 @@ find_file:
 
     ; If we get here, it means the file was not found
     .not_found:
-        clc
-        ret
+        stc
+        pop di
+        retf
 
     .found:
+        clc
+        pop di
+        sub si, 60
+        mov cx, 64
+        rep movsb
+        retf
 
+    .error:
+        pop di
+        retf
 
     .FILE_NAME_BUFFER:    times 60 db 0                  ; The maximum length of a file's name is 60 bytes
 
@@ -60,6 +82,14 @@ find_file:
 ; IN ax Cluster number of the cluster to read (0 - 65535)
 ;    dx:bx Memory location of where clusters should be loaded
 read_clusters:
+
+
+        mov ah, 0x0E
+        mov al, 'R'
+        mov bx, 0x0007
+        int 10h
+        jmp $
+
 
     ; Can't load a cluster greater than the last cluster, duh.
     cmp ax, word [LAST_CLUSTER]
@@ -129,3 +159,17 @@ read_clusters:
 .PRESERVE_ECX: dd 0x00
 .PRESERVE_EDX: dd 0x00
 .PRESERVE_ESI: dd 0x00
+
+
+find_sample:
+    mov si, .FLEN
+    mov di, .FILE_ENT
+    call 0x00:find_file
+    mov si, di
+    mov al, ' '
+    call 0x00:print_byte_terminated_string
+    jmp $
+    .FLEN: dd 6
+    .FILENAME: db "Sample"
+    .FILE_ENT: times 64 db 0
+    
