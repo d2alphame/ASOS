@@ -16,6 +16,40 @@ wait_for_key_scancode:
     retf
 
 
+; Prints a string whose length is specified in ecx.
+; In SI: Points to the string to print
+;    ECX: The length of the string
+print_string_len_ecx:
+    mov ah, 0x0E
+    mov bx, 0x0007
+    jecxz .done
+    .loop:
+        lodsb
+        int 10h
+        loop .loop
+    .done:
+        retf
+
+
+; Prints a string whose length is specified in ecx and appends a newline
+; In SI: Points tot he string to print
+;   ECX: The length of the string to print
+say_string_len_ecx:
+    mov ah, 0x0E
+    mov bx, 0x0007
+    jecxz .done
+    .loop:
+        lodsb
+        int 10h
+        loop .loop
+    mov al, 0x0D
+    int 10h
+    mov al, 0x0A
+    int 10h    
+    .done:
+        retf
+
+
 ; Prints out the content of the eax register in hexadecimal
 ; IN:
 ;   EAX: The value to print 

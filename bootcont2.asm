@@ -148,7 +148,7 @@ read_clusters:
 
 
 find_sample:
-    
+
     xor esi, esi
     xor edi, edi
  
@@ -156,13 +156,15 @@ find_sample:
     mov di, .FILE_ENT
     call 0x00:find_file
 
-    mov si, .FILE_PPT
-    lodsd
-    call 0x00:say_eax_hex
+    jc .not_found
+    jmp $
+
+.not_found:
+    call 0x00:print_eax_hex
     jmp $
 
     .FLEN: dd 6
-    .FILENAME: db "Sample"
+    .FILENAME: db "Bloody"
     .FILE_ENT: times 60 db 0
     .FILE_PPT: dd 0
     
