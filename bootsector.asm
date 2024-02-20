@@ -88,7 +88,7 @@ RELOCATED:
     
     ; jmp READ_ASOS_BOOT_EXTRAS                       ; Continue with reading the asos boot extras file
     ; jmp find_sample
-    ; jmp $
+    jmp $
 
 error_reading_rest_of_boot_image:
     mov si, ERROR_READING_REST_OF_BOOT_IMAGE
@@ -255,10 +255,10 @@ dw 0xAA55                                            ; The boot signature
 ; The jump table follows. This places the jump table at the 2kb (0x800) mark *
 ; ****************************************************************************
 
-%include "jumptable.asm"
+; %include "jumptable.asm"
 %include "bootcont.asm"
-%include "bootcont2.asm"
-
+; %include "bootcont2.asm"
+; 
 ;   times 65536 - ($ - $$) db 0
 ;   fname: db "Sample"
 ;     times 60 - ($ - fname) db ' '
