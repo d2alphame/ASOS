@@ -1,5 +1,18 @@
 MORE_SYSTEMS_ROUTINES:
 
+; Loops until a given key with the ascii code is pressed.
+;   In AL: ASCII of key to wait for
+;   Out AL: ASCII of the key
+wait_for_key_ascii:
+    mov dl, al
+    .loop:
+        mov ah, 0x00                    ; BIOS function to get key
+        int 16h                         ; Keyboard interrupt
+        cmp al, dl                      ; Check if it's the key we're waiting for
+        jnz .loop                       ; Continue waiting if it's not
+
+    retf
+
 
 ; Loops until a given key with the scancode is pressed.
 ;   In AL: Scancode of key to wait for

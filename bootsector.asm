@@ -87,26 +87,13 @@ RELOCATED:
     call 0x00:print_null_terminated_string
     
     ; jmp READ_ASOS_BOOT_EXTRAS                       ; Continue with reading the asos boot extras file
-    jmp find_sample
+    ; jmp find_sample
+    ; jmp $
 
 error_reading_rest_of_boot_image:
     mov si, ERROR_READING_REST_OF_BOOT_IMAGE
     call 0x00:print_null_terminated_string
     jmp $
-
-
-; Loops until a given key with the ascii code is pressed.
-;   In AL: ASCII of key to wait for
-;   Out AL: ASCII of the key
-; wait_for_key_ascii:
-;     mov dl, al
-;     .loop:
-;         mov ah, 0x00                    ; BIOS function to get key
-;         int 16h                         ; Keyboard interrupt
-;         cmp al, dl                      ; Check if it's the key we're waiting for
-;         jnz .loop                       ; Continue waiting if it's not
-; 
-;     retf
 
 
 ; Prints a null terminated string. 
@@ -268,17 +255,17 @@ dw 0xAA55                                            ; The boot signature
 ; The jump table follows. This places the jump table at the 2kb (0x800) mark *
 ; ****************************************************************************
 
-; %include "jumptable.asm"
-  %include "bootcont.asm"
-  %include "bootcont2.asm"
+%include "jumptable.asm"
+%include "bootcont.asm"
+%include "bootcont2.asm"
 
-  times 65536 - ($ - $$) db 0
-  fname: db "Sample"
-    times 60 - ($ - fname) db ' '
-    dw 0x05
-    dw 1024
-
-  times 4194304 - ($ - $$) db 0
-    db "Hello"
-
-  times 536870912 - ($ - $$) db 0
+;   times 65536 - ($ - $$) db 0
+;   fname: db "Sample"
+;     times 60 - ($ - fname) db ' '
+;     dw 0x05
+;     dw 1024
+; 
+;   times 4194304 - ($ - $$) db 0
+;     db "Hello"
+; 
+;   times 536870912 - ($ - $$) db 0
