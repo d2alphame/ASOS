@@ -1,6 +1,5 @@
 MORE_SYSTEMS_ROUTINES:
 
-
 ; Prints out the content of the eax register in hexadecimal
 ; IN:
 ;   EAX: The value to print 
