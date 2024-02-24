@@ -87,8 +87,8 @@ RELOCATED:
     call 0x00:print_null_terminated_string
     
     ; jmp READ_ASOS_BOOT_EXTRAS                       ; Continue with reading the asos boot extras file
-    ; jmp find_sample
-    jmp $
+    jmp find_sample
+    ; jmp $
 
 error_reading_rest_of_boot_image:
     mov si, ERROR_READING_REST_OF_BOOT_IMAGE
@@ -256,16 +256,14 @@ dw 0xAA55                                            ; The boot signature
 ; ****************************************************************************
 
 ; %include "jumptable.asm"
-; %include "bootcont.asm"
+%include "bootcont.asm"
 %include "bootcont2.asm"
-; 
-;   times 65536 - ($ - $$) db 0
-;   fname: db "Sample"
-;     times 60 - ($ - fname) db ' '
-;     dw 0x05
-;     dw 1024
-; 
-;   times 4194304 - ($ - $$) db 0
-;     db "Hello"
-; 
-;   times 536870912 - ($ - $$) db 0
+
+ times 65536 - ($ - $$) db 0
+ fname: db "Sample"
+   times 60 - ($ - fname) db ' '
+   dw 0x05
+   dw 1024
+ times 4194304 - ($ - $$) db 0
+   db "Hello"
+ times 536870912 - ($ - $$) db 0

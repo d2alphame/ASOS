@@ -69,6 +69,8 @@ wait_for_key_scancode:
 ;           This should be at least 64 bytes.
 ; OUT:  If found, DI will point to the file's entry (i.e. its name, cluster
 ;      number and size)
+;       AX will contain the cluster number if the file is found
+;       CF cleared on success, set on error with error code in ax
 find_file:
     
     push di
@@ -85,8 +87,11 @@ find_file:
     mov ecx, eax                        ; Put it in ecx in preparation for the rep movsb instruction
     rep movsb                           ; Copy the filename to the buffer
 
-
     ; Now we have a space-padded filename string
+
+    ; Preserve EDX and EBX before we continue
+    mov dword [.PRESERVE_EBX], ebx
+    mov dword [.PRESERVE_EDX], edx
 
     ; Read in cluster number 16 to 1023 (in a loop) and search for the filename within the cluster
     xor dx, dx                          ; Clusters will be loaded at dx:bx
@@ -95,19 +100,19 @@ find_file:
     
 .outer_loop:
     call read_clusters
-        jc .error
-    
-        mov si, bx
-        mov cx, 64
-        .inner_loop:
-            push cx
-            mov cx, 60
-            mov di, .FILE_NAME_BUFFER
-            repz cmpsb
-            pop cx                      ; We pop cx before the jump (next instruction) in order to prevent stack overflow
-            jz .found
-            add si, 4                   ; Skip over last 4 bytes of the file entry we just checked
-            loop .inner_loop
+    jc .error
+
+    mov si, bx
+    mov cx, 64
+    .inner_loop:
+        push cx
+        mov cx, 60
+        mov di, .FILE_NAME_BUFFER
+        repz cmpsb
+        pop cx                      ; We pop cx before the jump (next instruction) in order to prevent stack overflow
+        jz .found
+        add si, 4                   ; Skip over last 4 bytes of the file entry we just checked
+        loop .inner_loop
     inc ax
     cmp ax, 1023
     jna .outer_loop
@@ -119,20 +124,60 @@ find_file:
         retf
 
     .found:
-        clc
         pop di
+        mov ebx, dword [.PRESERVE_EBX]
+        mov edx, dword [.PRESERVE_EDX]
         sub si, 60
         mov ecx, 64
         rep movsb
         sub di, 64
+        sub si, 64
+        mov ax, word [ si + 62]
+        mov cx, word [ si + 60]
+        clc
         retf
 
     .error:
         pop di
         retf
 
-    .FILE_NAME_BUFFER:    times 60 db 0                  ; The maximum length of a file's name is 60 bytes
+.FILE_NAME_BUFFER:    times 60 db 0                  ; The maximum length of a file's name is 60 bytes
+.PRESERVE_EBX: dd 0x00
+.PRESERVE_EDX: dd 0x00
 
+
+
+; Reads a file into memory
+; IN: SI The name of the file to read to memory
+;      DX:BX Memory location where the file should be loaded
+; OUT: DS:SI and ES:DI will point to memory location where file is loaded
+;      CF is set on error with error code in AX, clear on success
+read_file:
+
+    mov di, .file_entry
+
+    call 0x00:find_file
+    jc .error_finding_file
+
+    call read_clusters
+    jc .error_reading_clusters
+ 
+    mov ds, dx
+    mov es, dx
+    mov si, bx
+    mov di, bx
+
+    clc
+    retf
+
+.error_finding_file:
+    stc
+    retf
+.error_reading_clusters:
+    stc
+    retf
+
+.file_entry: times 64 db 0
 
 
 ; Reads a single cluster from ASOS's filesystem
@@ -210,24 +255,29 @@ read_clusters:
 .PRESERVE_ESI: dd 0x00
 
 
-; find_sample:
-; 
-;     xor esi, esi
-;     xor edi, edi
-;  
-;     mov si, .FLEN
-;     mov di, .FILE_ENT
-;     call 0x00:find_file
-; 
-;     jc .not_found
-;     jmp $
-; 
+find_sample:
+    xor esi, esi
+    xor edi, edi
+ 
+    mov si, .FLEN
+    mov bx, 0x4000
+    mov dx, 0x0000
+
+    call 0x00:read_file
+
+        
+    mov al, 'X'
+    mov ah, 0x0E
+    mov bx, 0x0007
+    int 10h
+    jmp $
+
 ; .not_found:
 ;     call 0x00:print_eax_hex
 ;     jmp $
-; 
-;     .FLEN: dd 6
-;     .FILENAME: db "Bloody"
-;     .FILE_ENT: times 60 db 0
-;     .FILE_PPT: dd 0
+
+    .FLEN: dd 6
+    .FILENAME: db "Sample"
+    .FILE_ENT: times 60 db 0
+    .FILE_PPT: dd 0
     
