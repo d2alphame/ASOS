@@ -84,8 +84,8 @@ dump_memory_hex:
         int 10h
 
     ; Print the headers
-    ; First print out intial 8 spaces in the header
-    mov cl, 0x04
+    ; First print out intial 4 spaces in the header
+    mov cx, 0x04
     mov ah, 0x0E
     mov al, ' '
     .print_initial_spaces:
