@@ -53,7 +53,7 @@ wait_for_key_ascii:
 ;   Out AH: Scancode of the key
 ;       AL: ASCII of the key, if the key has no ascii, this would be 0
 wait_for_key_scancode:
-    mov dl, ah
+    mov dl, al
     .loop:
         mov ah, 0x00                    ; BIOS function to get key
         int 16h                         ; Keyboard interrupt
